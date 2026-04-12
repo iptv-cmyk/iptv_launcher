@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="tech.vvs.vvs_launcher">
+
+    <!-- Network permissions are required to fetch the channel list and stream video -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- Keep the CPU awake during playback. Required when using ExoPlayer.setWakeMode. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <!-- Allow the application to query and launch external apps -->
+    <queries>
+        <package android:name="com.netflix.ninja" />
+        <package android:name="com.google.android.youtube.tv" />
+    </queries>
+    <application
+        android:allowBackup="true"
+		android:largeHeap="true"
+		android:hardwareAccelerated="true"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:usesCleartextTraffic="true"
+        android:appCategory="video"
+        android:icon="@drawable/app_banner"
+        android:roundIcon="@drawable/app_banner"
+        android:banner="@drawable/app_banner"
+        android:logo="@drawable/app_banner"
+        android:theme="@style/Theme.MulticastPlayer">
+
+        <!-- Splash screen is the launcher activity. It shows the logo briefly
+             before launching MainActivity. -->
+        <activity
+            android:name="tech.vvs.vvs_launcher.SplashActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:banner="@drawable/app_banner"
+            android:logo="@drawable/v_logo"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- MainActivity no longer contains the LAUNCHER intent filter.
+             It will be started explicitly from SplashActivity. -->
+        <activity
+            android:name="tech.vvs.vvs_launcher.MainActivity"
+            android:label="@string/app_name"
+            android:banner="@drawable/app_banner"
+            android:exported="true" />
+
+        <service 
+            android:name="tech.vvs.vvs_launcher.IBSDiscoveryService"
+            android:foregroundServiceType="dataSync" 
+            android:exported="false" />
+        <service 
+            android:name="tech.vvs.vvs_launcher.HelloService"
+            android:foregroundServiceType="dataSync" 
+            android:exported="false" />
+
+        <receiver android:name="tech.vvs.vvs_launcher.NetflixResetReceiver" android:exported="false" />
+
+        <service
+            android:name=".HomeButtonAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

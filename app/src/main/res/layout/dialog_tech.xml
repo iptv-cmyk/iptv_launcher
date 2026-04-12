@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="32dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/backgrounds_missing"
+            android:textStyle="bold"
+            android:visibility="gone"
+            android:id="@+id/backgroundsMissingText" />
+
+        <ListView
+            android:id="@+id/backgroundListView"
+            android:layout_width="match_parent"
+            android:visibility="gone"
+            android:layout_height="240dp"
+            android:choiceMode="singleChoice" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/room_number_title" />
+
+        <EditText
+            android:id="@+id/roomNumberEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/room_number_hint"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/channelUrlEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="@string/enter_channel_list_url"
+            android:inputType="textUri" />
+
+        <CheckBox
+            android:id="@+id/manualOverrideCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Is Manual" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/min_buffer_prompt" />
+
+        <EditText
+            android:id="@+id/bufferEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/min_buffer_hint"
+            android:inputType="number" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="30dp" />
+
+        <CheckBox
+            android:id="@+id/netflixResetCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Auto Netflix Reset" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Reset Hour" />
+
+        <EditText
+            android:id="@+id/netflixResetHourEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Reset Hour (0-23)"
+            android:inputType="number" />
+            
+        <Button
+            android:id="@+id/netflixResetNowButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/action_reset_netflix" />
+
+    </LinearLayout>
+
+</ScrollView>

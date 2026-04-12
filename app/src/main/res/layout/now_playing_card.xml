@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#66000000"
+    android:elevation="6dp">
+
+    <TextView
+        android:id="@+id/npTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Program"
+        android:textSize="22sp"
+        android:textColor="@android:color/white"
+        android:fontFamily="sans-serif-medium"/>
+
+    <TextView
+        android:id="@+id/npMeta"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="11:58 — 12:51 • 26 min"
+        android:textSize="14sp"
+        android:textColor="@color/channelItemSecondary"
+        android:layout_marginTop="6dp"/>
+
+    <ProgressBar
+        style="?android:attr/progressBarStyleHorizontal"
+        android:id="@+id/npProgress"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="10dp"
+        android:max="100"
+        android:progress="30"/>
+
+    <TextView
+        android:id="@+id/npDesc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Program description"
+        android:textColor="@color/channelItemSecondary"
+        android:layout_marginTop="8dp"/>
+</LinearLayout>

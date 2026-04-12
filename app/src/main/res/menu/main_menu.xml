@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/action_settings"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+
+    <!-- Menu item to enter and play a specific stream URL -->
+
+    <item
+        android:id="@+id/action_play_single"
+        android:visible="false"
+        android:title="@string/action_play_single"
+        android:orderInCategory="101"
+        app:showAsAction="never" />
+
+
+    <!-- Menu item to show an About dialog explaining the app and credits -->
+
+    <!-- About information -->
+
+
+    <item
+        android:id="@+id/action_reset_netflix"
+        android:title="@string/action_reset_netflix"
+        android:visible="false"
+        android:orderInCategory="103"
+        app:showAsAction="never" />
+
+
+    <item
+        android:id="@+id/action_tech"
+        android:title="@string/action_tech"
+        android:orderInCategory="104"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_about"
+        android:title="@string/action_about"
+        android:orderInCategory="105"
+        app:showAsAction="never" />
+</menu>

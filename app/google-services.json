@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "381742432718",
+    "project_id": "ip-tv-player-f6a9d",
+    "storage_bucket": "ip-tv-player-f6a9d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381742432718:android:b73b7a6a752cc5ffe4ab9f",
+        "android_client_info": {
+          "package_name": "tech.vvs.iptv_player"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAk2xGRCoP8FUn-H3jZPgi3KQxKDV-0YRw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381742432718:android:a259959d23ff4740e4ab9f",
+        "android_client_info": {
+          "package_name": "tech.vvs.vvs_launcher"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAk2xGRCoP8FUn-H3jZPgi3KQxKDV-0YRw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

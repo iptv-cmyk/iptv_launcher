@@ -1,0 +1,105 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
+}
+
+android {
+    buildFeatures {
+        buildConfig true
+    }
+    namespace 'tech.vvs.vvs_launcher'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'tech.vvs.vvs_launcher'
+        minSdk 21
+        targetSdk 35
+        versionCode 71
+        versionName '7.1'
+
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+
+        ndk {
+            // Explicitly include both 32-bit and 64-bit architectures
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
+    }
+
+    buildTypes {
+        release {
+            // Disable code shrinking and obfuscation for simplicity.
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+        // Enable core library desugaring. Some third‑party libraries (such as
+        // Jellyfin’s media3‑ffmpeg‑decoder) may use Java 8+ APIs (e.g. java.time)
+        // that require desugaring on older Android API levels.
+        coreLibraryDesugaringEnabled true
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.10.0'
+
+    // Media3 (ExoPlayer) dependencies for media playback and UI
+    implementation 'androidx.media3:media3-exoplayer:1.3.1'
+    implementation 'androidx.media3:media3-ui:1.3.1'
+    // Add the HLS module so the player can automatically handle HTTP Live
+    // Streaming (.m3u8) playlists. Without this, ExoPlayer will not
+    // recognise HLS streams and will attempt to treat them as regular files.
+    // This dependency is available from the Google Maven repository【388134073544991†L117-L129】.
+    implementation 'androidx.media3:media3-exoplayer-hls:1.3.1'
+    // Include the DataSource and Extractor modules to access UdpDataSource and TS extraction
+    implementation 'androidx.media3:media3-datasource:1.3.1'
+    implementation 'androidx.media3:media3-extractor:1.3.1'
+
+    // Use the Jellyfin community FFmpeg decoder to add support for audio
+    // formats not decoded by the platform, such as MP2 (MPEG‑L2).  The
+    // artifact is hosted on Maven Central and provides a drop‑in FFmpeg
+    // implementation for Media3.  Version 1.3.1+2 matches the Media3 1.3.x
+    // release of your app【710019455294767†L0-L12】.  Without an FFmpeg decoder,
+    // ExoPlayer may play video but fail to render audio for multicast
+    // streams encoded with MP2【879645957875006†L100-L106】.
+    implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.3.1+2'
+
+    // Lifecycle and coroutines support
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1'
+
+    // RecyclerView for channel list
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+
+    // Desugaring library needed because the Jellyfin FFmpeg decoder uses
+    // Java 8+ APIs.  This dependency must be added when
+    // coreLibraryDesugaringEnabled is true.
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
+    
+    // ADB Client Library
+    implementation 'dev.mobile:dadb:1.2.10'
+
+    // Android YouTube Player
+    implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0'
+
+    // Firebase Analytics & Crashlytics
+    implementation platform('com.google.firebase:firebase-bom:32.7.1')
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+    
+    // Play Core for In-App Updates
+    implementation 'com.google.android.play:app-update:2.1.0'
+    implementation 'com.google.android.play:app-update-ktx:2.1.0'
+}

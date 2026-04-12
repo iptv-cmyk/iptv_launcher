@@ -1,0 +1,217 @@
+7.1
+---
+* UI/UX improvements.
+
+7.0
+---
+* Critical bug fix (accessibility talkback activated when setting vvs accessibility).
+
+6.9
+----
+* Logo fix 5.
+* Upgrade test5.
+
+6.7
+----
+* Logo fix 4.
+* Upgrade test4.
+
+6.6
+---
+* Logo fix 3.
+* Upgrade test3.
+
+
+6.4
+---
+* Logo fix 2
+* Upgrade test2.
+
+6.3
+---
+* Logo fix.
+* Upgrade test.
+
+5.5
+---
+* Closed testing.
+
+5.4
+---
+* Handled back correctly (certification friendly).
+* manual getplaylist bug fixed.
+* status icon moved (relative).
+
+
+5.3
+---
+* Icon location changes.
+* new brown background.
+* Location of the date-time changed
+
+5.2
+---
+* Crashlytics support
+
+5.1
+---
+* Floating buttons bug fixed.
+* Discovery manual url fix.
+
+5.0
+---
+* Leanback support.
+* Lots of UI changes.
+
+4.4
+---
+* Support for inactive channels (channel lineup update)
+
+4.3
+---
+* More UI fixes (preparing for leanback).
+
+4.2
+----
+* Test TV update 3.
+
+4.1
+---
+* App update onResume.
+* TV update test mech 2
+
+4.0
+---
+* Update test tv.
+
+3.8
+---
+* App update mechanism added.
+
+3.7
+---
+* Hot icon.
+* Replaced welcome adaptation.
+* data-time to the right.
+* Channels panel is not opened by default.
+
+3.6
+---
+* Replaced some texts with animations.
+* Some minor bugs fixed.
+
+3.5
+---
+* Get play list after getting update channels from ibs.
+* Added more leanback features.
+* Added channels button.
+* Buttons will appear for 10 secs after clicking on the player video (dpad, and touch).
+
+3.4
+----
+* Code refactors.
+
+3.3
+---
+* Call registration on start.
+* Added netflix and youtube buttons,
+* Handled focus UX for buttons and sidebar.
+
+3.2
+----
+* Code refactors 2.
+
+3.1
+----
+* Code refactors.
+
+3.0
+---
+* Update channel selection browsing, and selected channel logic and UI.
+* Channel lineup update support start (not fully integrated).
+* implemented ibs report mechanism, calling report when channel is changed.
+    To test the report mechanism on IBS side call:
+    http://192.168.2.214:9002/player/statusreport?playerid=NGQ0ODU5ZDQwY2M1NmI4MA==&report=change
+    This will trigger the channel lineup update event on the player, and the player will report channel lineup update to the IBS.
+
+2.9
+----
+* Discovery is always alive (also waiting for channel change message)
+* Hello pinging every hour.
+
+2.8
+----
+* 32 bit support.
+* Small UI fixes.
+
+2.7
+---
+* Bug fixed in initial channel selection.
+* Discovery improvements.
+* Improved IBS service failure recovery.
+
+2.6
+---
+* 7 taps on the build number reveals the tech menu.
+
+2.5
+----
+* Show the welcome page till channel selection
+* No background -> IBS background.
+* Selected Channel indicator.
+* Scroll channel list highlight.
+* More robust netflix reset mechanism.
+
+2.4
+----
+* Netflix reset improved logging, tests on android 16 (failed).
+
+2.3
+---
+* Bugs fixed.
+
+2.2
+---
+* Firebase monitoring & analytics support (registration event added).
+Use the link to view events:
+https://console.firebase.google.com/project/ip-tv-player-f6a9d/overview
+* Fixed room number (can be string).
+
+2.1
+---
+* DeviceID to base64
+* Dynamic hello challenge.
+
+2.0
+----
+* Register updated.
+
+1.9
+---
+* Fw service notification fix.
+
+1.8
+---
+* IBS Registration
+* IBS Hello
+
+1.7
+---
+* Welcome from ibs.
+* Daily Netflix reset mechanism (added hour to the tech menu).
+
+1.6
+---
+* Discovery.
+
+1.5
+---
+* YT support.
+
+1.4
+----
+* Play upgrade test
+
+1.3
+---
+* Manifest changed to support play installation.

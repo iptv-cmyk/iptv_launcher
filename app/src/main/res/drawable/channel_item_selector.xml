@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Focused and Activated (Playing & Focused) -->
+    <item android:state_focused="true" android:state_activated="true">
+        <shape>
+            <!-- slightly lighter/transparent red to indicate focus on top of selection -->
+            <solid android:color="#CCFF5252" />
+        </shape>
+    </item>
+
+    <!-- Focused (Navigation Focus) -->
+    <item android:state_focused="true">
+        <shape>
+            <solid android:color="#66FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Activated (Playing Channel) -->
+    <item android:state_activated="true">
+        <shape>
+            <solid android:color="@color/channel_selected_light_red" />
+        </shape>
+    </item>
+
+    <!-- Default state: transparent -->
+    <item>
+        <shape>
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+</selector>

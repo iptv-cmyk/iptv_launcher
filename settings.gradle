@@ -1,0 +1,22 @@
+pluginManagement {
+    // Configure repositories for plugin and dependency resolution. Without these
+    // declarations Gradle will look only in its default plugin portal and may
+    // fail to locate the Android Gradle plugin. Including google() here allows
+    // Gradle to download com.android.application and other Android plugins.
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "VVS-Launcher"
+include(":app")

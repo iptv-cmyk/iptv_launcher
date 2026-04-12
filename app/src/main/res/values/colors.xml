@@ -1,0 +1,26 @@
+<resources>
+    <!--  Primary brand color for the app  -->
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryVariant">#D9D0EF</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorSecondary">#03DAC6</color>
+    <color name="colorOnSecondary">#000000</color>
+    <color name="colorBackground">#FFFFFF</color>
+    <color name="colorOnBackground">#000000</color>
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="colorOnSurface">#000000</color>
+    <color name="colorError">#B00020</color>
+    <color name="colorOnError">#FFFFFF</color>
+    <!--  Semi-transparent background for the channel list overlay. The alpha of CC (~80%)
+             produces a dark scrim that allows the video to remain partially visible
+             underneath while improving text readability on TV screens.  -->
+    <color name="channelListBackground">#CC0D141A</color>
+    <color name="channelItemFocused">#1F6FEB</color>
+    <color name="channelItemText">#FFFFFFFF</color>
+    <color name="channelItemSecondary">#9FB3C8</color>
+    <color name="channelItemSubtext">#99FFFFFF</color>
+    <!--  60% white for the EPG subtitle  -->
+    <color name="colorPrimaryDialogButton">#D9D0EF</color>
+    <color name="channel_selected_light_red">#FF5252</color>
+    <color name="banner_background">#0E1E2A</color>
+</resources>
