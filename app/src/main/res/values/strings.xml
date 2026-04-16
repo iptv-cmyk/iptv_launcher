@@ -39,7 +39,7 @@
     <string name="room_number_hint">Enter room number</string>
     <string name="invalid_room_number">Please enter a valid room number.</string>
     <string name="save">Save</string>
-    <string name="exit_title">Exit</string>
+    <string name="exit_title">Exit App</string>
     <string name="exit_message">Are you sure you want to exit?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>

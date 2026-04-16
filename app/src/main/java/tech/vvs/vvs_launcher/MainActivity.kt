@@ -2,6 +2,8 @@ package tech.vvs.vvs_launcher
 
 import android.content.Context
 import android.content.Intent
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Bundle
@@ -75,6 +77,12 @@ import android.animation.ValueAnimator
  */
 @androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 class MainActivity : AppCompatActivity() {
+    companion object {
+        private const val ACTION_SHOW_WELCOME = "tech.vvs.vvs_launcher.action.SHOW_WELCOME"
+        private const val ACTION_OPEN_ABOUT = "tech.vvs.vvs_launcher.action.OPEN_ABOUT"
+        private const val PREF_PENDING_HOME_RESET = "pending_home_reset"
+        private const val EXTRA_OPEN_ABOUT = "open_about"
+    }
 
     private val channelAutoHideHandler = Handler(Looper.getMainLooper())
     private val channelAutoHideRunnable = Runnable {
@@ -95,10 +103,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var waitingForChannelContainer: View
     private lateinit var waitingChannelIcon: ImageView
     private var waitingIconAnimator: ObjectAnimator? = null
+    private var channelsButtonAnimator: ObjectAnimator? = null
     private lateinit var serviceDiscoveryProgress: android.widget.ProgressBar
     private lateinit var welcomeStateContainer: View
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var adapter: ChannelAdapter
+    private lateinit var channelsButton: View
     private lateinit var multicastLock: WifiManager.MulticastLock
     
     private val osdHandler = Handler(Looper.getMainLooper())
@@ -166,6 +176,21 @@ class MainActivity : AppCompatActivity() {
     private val prefs by lazy {
         getSharedPreferences("vvs_prefs", Context.MODE_PRIVATE)
     }
+    private val showWelcomeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ACTION_SHOW_WELCOME) {
+                clearPendingHomeReset()
+                returnToWelcomeScreen()
+            }
+        }
+    }
+    private val openAboutReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ACTION_OPEN_ABOUT) {
+                openAboutDialogFromLauncher()
+            }
+        }
+    }
     
     // Listener to reload channels if URL changes via service
     private val prefListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
@@ -224,6 +249,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Back button logic preserved
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+
             override fun handleOnBackPressed() {
                 if (this@MainActivity::drawerLayout.isInitialized &&
                     drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -231,7 +257,7 @@ class MainActivity : AppCompatActivity() {
                     showFloatingButtonsTemporarily()
                     return
                 }
-                
+              /*
                 val dialog = AlertDialog.Builder(this@MainActivity)
                     .setTitle(R.string.exit_title)
                     .setMessage(R.string.exit_message)
@@ -242,14 +268,19 @@ class MainActivity : AppCompatActivity() {
                     }
                     .setNegativeButton(R.string.no, null)
                     .create()
-                    
+
                 dialog.show()
 
                 val positiveButtonColor = androidx.core.content.ContextCompat.getColor(this@MainActivity, R.color.colorPrimaryDialogButton)
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(positiveButtonColor)
                 dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(positiveButtonColor)
+
+               */
             }
+
+
         })
+
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -327,7 +358,8 @@ class MainActivity : AppCompatActivity() {
             settingsButton.visibility = View.GONE
         }
         
-        findViewById<View>(R.id.channelsButton).setOnClickListener {
+        channelsButton = findViewById(R.id.channelsButton)
+        channelsButton.setOnClickListener {
             if (!drawerLayout.isDrawerOpen(GravityCompat.START) && adapter.itemCount > 0) {
                 drawerLayout.openDrawer(GravityCompat.START)
                 scrollToSelectedChannel()
@@ -445,6 +477,18 @@ class MainActivity : AppCompatActivity() {
 
         // Register listener for dynamic updates from service
         prefs.registerOnSharedPreferenceChangeListener(prefListener)
+        ContextCompat.registerReceiver(
+            this,
+            showWelcomeReceiver,
+            IntentFilter(ACTION_SHOW_WELCOME),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        ContextCompat.registerReceiver(
+            this,
+            openAboutReceiver,
+            IntentFilter(ACTION_OPEN_ABOUT),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         
         // Ensure Netflix auto-reset is scheduled
         scheduleNetflixReset(this)
@@ -471,6 +515,10 @@ class MainActivity : AppCompatActivity() {
             if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 androidx.core.app.ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
             }
+        }
+
+        if (consumeOpenAboutIntent(intent)) {
+            openAboutDialogFromLauncher()
         }
     }
 
@@ -546,6 +594,14 @@ class MainActivity : AppCompatActivity() {
                 android.view.KeyEvent.KEYCODE_PAGE_DOWN,
                 167 -> {
                     selectPreviousChannel()
+                    return true
+                }
+                android.view.KeyEvent.KEYCODE_SETTINGS,
+                android.view.KeyEvent.KEYCODE_MENU -> {
+                    if (this@MainActivity::floatingButtonsContainer.isInitialized) {
+                        floatingButtonsContainer.visibility = View.GONE
+                    }
+                    showAboutDialog()
                     return true
                 }
                 android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
@@ -984,6 +1040,13 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun openAboutDialogFromLauncher() {
+        if (this@MainActivity::floatingButtonsContainer.isInitialized) {
+            floatingButtonsContainer.visibility = View.GONE
+        }
+        showAboutDialog()
+    }
+
     private fun launchApp(packageName: String, fallbackUrl: String) {
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         if (intent != null) {
@@ -1004,30 +1067,89 @@ class MainActivity : AppCompatActivity() {
         val show = channel == null && !hasMedia
         
         if (show) {
+            if (::playerView.isInitialized) {
+                playerView.visibility = View.GONE
+            }
+            if (::youTubePlayerView.isInitialized) {
+                youTubePlayerView.visibility = View.GONE
+            }
             val channels = if (::viewModel.isInitialized) viewModel.channels.value else emptyList()
             if (channels.isEmpty()) {
                 waitingForChannelContainer.visibility = View.GONE
                 serviceDiscoveryProgress.visibility = View.VISIBLE
                 waitingIconAnimator?.cancel()
+                stopChannelsButtonAnimation()
             } else {
                 waitingForChannelContainer.visibility = View.VISIBLE
                 serviceDiscoveryProgress.visibility = View.GONE
                 emptyStateText.setText(R.string.waiting_for_channel)
                 startWaitingIconAnimation()
+                startChannelsButtonAnimation()
             }
             welcomeStateContainer.visibility = View.VISIBLE
             floatingButtonsContainer.visibility = View.VISIBLE
             buttonsOverlayHandler.removeCallbacks(hideFloatingButtonsRunnable)
             
             // Explicitly request focus for TV users so the D-pad is immediately ready to traverse
-            val channelsBtn = findViewById<View>(R.id.channelsButton)
-            channelsBtn?.post { channelsBtn.requestFocus() }
+            channelsButton.post { channelsButton.requestFocus() }
             
         } else {
             waitingIconAnimator?.cancel()
+            stopChannelsButtonAnimation()
+            if (::playerView.isInitialized) {
+                playerView.visibility = View.VISIBLE
+            }
             welcomeStateContainer.visibility = View.GONE
             floatingButtonsContainer.visibility = View.GONE
         }
+    }
+
+    private fun returnToWelcomeScreen() {
+        if (!::player.isInitialized || !::welcomeStateContainer.isInitialized) return
+
+        cancelChannelAutoHide()
+        if (::drawerLayout.isInitialized && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        }
+
+        osdHandler.removeCallbacksAndMessages(null)
+        findViewById<TextView>(R.id.osdText)?.visibility = View.GONE
+
+        stallHandler.removeCallbacks(stallChecker)
+        player.pause()
+        player.clearMediaItems()
+
+        youTubePlayer?.pause()
+        if (::youTubePlayerView.isInitialized) {
+            youTubePlayerView.visibility = View.GONE
+        }
+        if (multicastLock.isHeld) {
+            multicastLock.release()
+        }
+
+        applyBackgroundFromPrefs()
+        viewModel.clearSelection()
+        updateEmptyState(null)
+    }
+
+    private fun consumePendingHomeReset(): Boolean {
+        val pending = prefs.getBoolean(PREF_PENDING_HOME_RESET, false)
+        if (pending) {
+            clearPendingHomeReset()
+        }
+        return pending
+    }
+
+    private fun clearPendingHomeReset() {
+        prefs.edit().remove(PREF_PENDING_HOME_RESET).apply()
+    }
+
+    private fun consumeOpenAboutIntent(intent: Intent?): Boolean {
+        val shouldOpenAbout = intent?.getBooleanExtra(EXTRA_OPEN_ABOUT, false) == true
+        if (shouldOpenAbout) {
+            intent?.removeExtra(EXTRA_OPEN_ABOUT)
+        }
+        return shouldOpenAbout
     }
 
     private fun startWaitingIconAnimation() {
@@ -1045,6 +1167,32 @@ class MainActivity : AppCompatActivity() {
         
         if (waitingIconAnimator?.isStarted != true) {
             waitingIconAnimator?.start()
+        }
+    }
+
+    private fun startChannelsButtonAnimation() {
+        if (!::channelsButton.isInitialized) return
+
+        if (channelsButtonAnimator == null) {
+            val scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1.0f, 1.25f, 1.0f)
+            val scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1.0f, 1.25f, 1.0f)
+            channelsButtonAnimator = ObjectAnimator.ofPropertyValuesHolder(channelsButton, scaleX, scaleY).apply {
+                duration = 1500
+                repeatCount = ValueAnimator.INFINITE
+                repeatMode = ValueAnimator.RESTART
+            }
+        }
+
+        if (channelsButtonAnimator?.isStarted != true) {
+            channelsButtonAnimator?.start()
+        }
+    }
+
+    private fun stopChannelsButtonAnimation() {
+        channelsButtonAnimator?.cancel()
+        if (::channelsButton.isInitialized) {
+            channelsButton.scaleX = 1.0f
+            channelsButton.scaleY = 1.0f
         }
     }
 
@@ -1110,13 +1258,31 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
+    val exitAppButton = dialogView.findViewById<android.widget.Button>(R.id.exitAppButton)
+    exitAppButton.setOnClickListener {
+        AlertDialog.Builder(this@MainActivity)
+            .setTitle(R.string.exit_title)
+            .setMessage(R.string.exit_message)
+            .setPositiveButton(R.string.yes) { _, _ ->
+                finishAffinity()
+            }
+            .setNegativeButton(R.string.no, null)
+            .create()
+            .also { confirmDialog ->
+                confirmDialog.show()
+                val btnColor = ContextCompat.getColor(applicationContext, R.color.colorPrimaryDialogButton)
+                confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(btnColor)
+                confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(btnColor)
+            }
+    }
+
     val dialog = AlertDialog.Builder(this)
         .setTitle(R.string.action_tech)
         .setView(dialogView)
         .setPositiveButton(R.string.save, null)
         .setNegativeButton(android.R.string.cancel, null)
         .create()
-        dialog.setOnShowListener {
+    dialog.setOnShowListener {
             val color = ContextCompat.getColor(applicationContext, R.color.colorPrimaryDialogButton)
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(color)
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(color)
@@ -1372,6 +1538,11 @@ class MainActivity : AppCompatActivity() {
         enterFullscreen()
         checkAppUpdate()
 
+        if (consumePendingHomeReset()) {
+            returnToWelcomeScreen()
+            return
+        }
+
         val channel = viewModel.selectedChannel.value
         channel?.let {
             val isUdp = it.uri.startsWith("udp", ignoreCase = true)
@@ -1385,6 +1556,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (consumeOpenAboutIntent(intent)) {
+            openAboutDialogFromLauncher()
+        }
+    }
+
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) enterFullscreen()
@@ -1393,6 +1572,8 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         prefs.unregisterOnSharedPreferenceChangeListener(prefListener)
+        unregisterReceiver(showWelcomeReceiver)
+        unregisterReceiver(openAboutReceiver)
         stallHandler.removeCallbacks(stallChecker)
         player.release()
         // DO NOT Release YouTubePlayerView manually if using lifecycle observer.
@@ -1534,6 +1715,3 @@ class MainActivity : AppCompatActivity() {
         Log.d("VVS_TV_LOG", "Netflix Auto Reset scheduled for: ${calendar.time}")
     }
 }
-
-
-

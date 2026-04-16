@@ -1,3 +1,17 @@
+7.3
+---
+* Settings remote button fixed to support more devices (need to verify)
+* Back button exit app removed
+* Tech exit app added.
+
+7.2
+---
+* home button exits channel play, and returns to welcome.
+* settings button enters the app about.
+* VVS logo removed from apps line.
+* VVS logo added to the about.
+* channels icon now indicates (animation) that the channels are ready.
+
 7.1
 ---
 * UI/UX improvements.

@@ -1,3 +1,14 @@
 backups/
 crash.log
 build/
+.codex
+app/build/
+app/release/
+*.hprof
+.gradle/
+.idea/
+local.properties
+captures/
+*.apk
+*.jks
+

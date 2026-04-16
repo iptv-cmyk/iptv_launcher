@@ -70,6 +70,11 @@ class ChannelViewModel(application: Application) : AndroidViewModel(application)
         Log.d("VVS_TV_LOG", "Selected channel: ${channel.name} (${channel.uri})")
     }
 
+    fun clearSelection() {
+        _selectedChannel.value = null
+        Log.d("VVS_TV_LOG", "Cleared selected channel")
+    }
+
     /**
      * Downloads the content of a remote file and returns it as a [String].
      */

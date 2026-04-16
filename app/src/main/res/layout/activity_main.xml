@@ -113,6 +113,7 @@
                     android:layout_marginTop="100dp"
                     android:orientation="vertical"
                     android:gravity="center"
+                    android:visibility="invisible"
                     android:background="@android:color/transparent"
                     android:padding="16dp">
 
@@ -240,6 +241,7 @@
                     app:fabCustomSize="64dp"
                     android:focusable="true"
                     android:focusableInTouchMode="true"
+                    android:visibility="gone"
                     android:nextFocusLeft="@+id/settingsButton"
                     android:contentDescription="About" />
 
