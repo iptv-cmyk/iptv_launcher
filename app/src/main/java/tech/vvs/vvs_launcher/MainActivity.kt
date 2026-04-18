@@ -1488,12 +1488,14 @@ class MainActivity : AppCompatActivity() {
                 
                 val latestVersionCode = jsonObject.optInt("latest_version", -1)
                 val currentVersionCode = BuildConfig.VERSION_CODE
+
                 
-                Log.d("VVS_TV_LOG", "App Update Check: Current=$currentVersionCode, Latest=$latestVersionCode")
+                Log.d("VVS_TV_LOG", "App " +
+                        " Check: Current=$currentVersionCode, Latest=$latestVersionCode")
 
                 if (latestVersionCode > currentVersionCode) {
                     withContext(Dispatchers.Main) {
-                        showForceUpdateDialog()
+                        showForceUpdateDialog(latestVersionCode, currentVersionCode)
                     }
                 }
             } catch (e: Exception) {
@@ -1502,25 +1504,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showForceUpdateDialog() {
+    private fun showForceUpdateDialog(latestVer: Int, currentVer: Int) {
         // Stop playback if playing
         if (this::player.isInitialized) {
             player.pause()
         }
 
+        // get package info
+        val packageInfo = packageManager.getPackageInfo(packageName, 0)
+
+
+
         AlertDialog.Builder(this)
             .setTitle("Update Required")
-            .setMessage("A new version of the app is available. Please update to continue using the application.")
+            .setMessage("A new version of the app is available. Please update to continue using the application: " + latestVer + " current: " + currentVer)
             .setCancelable(false) // Force the user to click the button
             .setPositiveButton("Update Now") { _, _ ->
                 try {
                     val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = Uri.parse("market://details?id=tech.vvs.vvs_launcher")
+                    //intent.data = Uri.parse("market://details?id=tech.vvs.vvs_launcher")
+                    intent.data = Uri.parse("market://details?id=" + packageInfo.packageName)
                     startActivity(intent)
                 } catch (e: Exception) {
                     // Fallback to web browser if Play Store is not installed
                     val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = Uri.parse("https://play.google.com/store/apps/details?id=tech.vvs.iptv_player")
+                    intent.data = Uri.parse("https://play.google.com/store/apps/details?id=" + packageInfo.packageName)
                     startActivity(intent)
                 }
                 // Close the app so they can't bypass it, or you can let the dialog stay active

@@ -11,6 +11,8 @@ import android.os.IBinder
 import android.util.Base64
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.net.HttpURLConnection
 import java.net.URL
@@ -22,6 +24,16 @@ import java.util.Arrays
 class HelloService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + Job())
+
+    /** Result of a single IBS ping attempt. */
+    private enum class PingResult {
+        /** IBS responded with HTTP 200 and valid auth. */
+        SUCCESS,
+        /** Network timeout or connection refused — IBS is down, player is fine. */
+        IBS_UNREACHABLE,
+        /** IBS responded but with a non-200 status or bad auth. */
+        IBS_ERROR
+    }
 
     companion object {
         private const val TAG = "HelloService"
@@ -63,12 +75,13 @@ class HelloService : Service() {
     private fun startPingLoop() {
         serviceScope.launch {
             while (isActive) {
-                val success = pingIBS()
-                if (!success) {
-                    Log.w(TAG, "Ping failed. content-type: triggering discovery service...")
+                val result = pingIBS()
+                updateFirestoreHeartbeat(result)
+                if (result == PingResult.IBS_UNREACHABLE || result == PingResult.IBS_ERROR) {
+                    Log.w(TAG, "Ping failed ($result). Triggering discovery service...")
                     try {
-                         val discoveryIntent = Intent(applicationContext, IBSDiscoveryService::class.java)
-                         startService(discoveryIntent)
+                        val discoveryIntent = Intent(applicationContext, IBSDiscoveryService::class.java)
+                        startService(discoveryIntent)
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to start discovery service", e)
                     }
@@ -78,14 +91,93 @@ class HelloService : Service() {
         }
     }
 
-    private suspend fun pingIBS(): Boolean {
+    /**
+     * Updates the player's heartbeat in Firestore after each hourly ping.
+     *
+     * Key distinction:
+     *  - The player is ALWAYS marked is_alive=true here — because if this code
+     *    is running, the player is clearly alive.
+     *  - ibs_reachable reflects whether the IBS responded successfully.
+     *    A timeout means the IBS is down, NOT the player.
+     *
+     * hotel_name is persisted by RegistrationService into shared prefs.
+     */
+    private fun updateFirestoreHeartbeat(result: PingResult) {
+        try {
+            val prefs     = getSharedPreferences("vvs_prefs", Context.MODE_PRIVATE)
+            val hotelName = prefs.getString("hotel_name", null)
+            val deviceId  = DeviceManager.getOrCreateDeviceId(applicationContext)
+            val db        = FirebaseFirestore.getInstance()
+            val ibsReachable = result == PingResult.SUCCESS
+            val now       = Timestamp.now()
+
+            if (hotelName.isNullOrEmpty()) {
+                // Player is alive but hasn't registered with any IBS yet.
+                // Write to the top-level unregistered_players collection so the
+                // dashboard can still see it.
+                val appVersion: String = try {
+                    packageManager.getPackageInfo(packageName, 0).versionName ?: "unknown"
+                } catch (e: Exception) { "unknown" }
+
+                val data = hashMapOf<String, Any>(
+                    "device_id"     to deviceId,
+                    "is_alive"      to true,
+                    "last_seen"     to now,
+                    "ibs_reachable" to ibsReachable,
+                    "app_version"   to appVersion,
+                    "model"         to (prefs.getString("device_model", "") ?: ""),
+                    "brand"         to (prefs.getString("device_brand", "") ?: ""),
+                    "ibs_ip"        to (prefs.getString("ibs_ip", "") ?: ""),
+                    "ibs_port"      to prefs.getInt("ibs_port", 0)
+                )
+                if (!ibsReachable) data["last_ibs_failure"] = now
+
+                db.collection("unregistered_players")
+                    .document(deviceId)
+                    .set(data, com.google.firebase.firestore.SetOptions.merge())
+                    .addOnSuccessListener {
+                        Log.d(TAG, "Unregistered heartbeat written for $deviceId")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Unregistered heartbeat failed", e)
+                    }
+                return
+            }
+
+            // Registered player — update the hotel sub-collection.
+            val updates = hashMapOf<String, Any>(
+                // The player is alive — it's running this code right now.
+                "is_alive"      to true,
+                "last_seen"     to now,
+                // IBS health is tracked separately.
+                "ibs_reachable" to ibsReachable
+            )
+            if (!ibsReachable) {
+                updates["last_ibs_failure"] = now
+            }
+
+            db.collection("hotels")
+                .document(hotelName)
+                .collection("players")
+                .document(deviceId)
+                .update(updates)
+                .addOnSuccessListener {
+                    Log.d(TAG, "Firestore heartbeat: is_alive=true, ibs_reachable=$ibsReachable (ping=$result)")
+                }
+                .addOnFailureListener { e -> Log.e(TAG, "Firestore heartbeat update failed", e) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Firestore heartbeat exception", e)
+        }
+    }
+
+    private suspend fun pingIBS(): PingResult {
         val prefs = getSharedPreferences("vvs_prefs", Context.MODE_PRIVATE)
         val ip = prefs.getString("ibs_ip", null)
         val port = prefs.getInt("ibs_port", -1)
 
         if (ip.isNullOrEmpty() || port <= 0) {
             Log.e(TAG, "Cannot ping: IBS IP/Port not set")
-            return false
+            return PingResult.IBS_ERROR
         }
 
         val deviceId = DeviceManager.getOrCreateDeviceId(applicationContext)
@@ -116,6 +208,7 @@ class HelloService : Service() {
             } catch (e: Exception) {
                 "Error reading response: ${e.message}"
             }
+            connection.disconnect()
             Log.d(TAG, "Hello response: $responseCode, Body: $responseText")
             
             if (responseCode == 200) {
@@ -155,24 +248,24 @@ class HelloService : Service() {
                     if (Arrays.equals(expectedResponse, serverResponseBytes)) {
                         Log.d(TAG, "Authentication successful")
                     } else {
-                         Log.e(TAG, "Authentication failed")
+                        Log.e(TAG, "Authentication failed")
                     }
                     
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in authentication verification", e)
                 }
-                true
+                PingResult.SUCCESS
             } else {
-                false
+                Log.w(TAG, "IBS returned non-200: $responseCode")
+                PingResult.IBS_ERROR
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            // Timeout = IBS is unreachable. The player is alive — it made the attempt.
+            Log.e(TAG, "IBS unreachable (timeout) — IBS is down, not the player", e)
+            PingResult.IBS_UNREACHABLE
         } catch (e: Exception) {
             Log.e(TAG, "Error pinging IBS", e)
-            false
-        } finally {
-            // connection.disconnect() handled by stream closure or GC usually, 
-            // but explicit disconnect is good if scope allows. 
-            // Here variable 'connection' is local to try block, so consistent disconnect is tricky without re-structure.
-            // Leaving as is since original code didn't rigorously disconnect in finally.
+            PingResult.IBS_UNREACHABLE
         }
     }
 

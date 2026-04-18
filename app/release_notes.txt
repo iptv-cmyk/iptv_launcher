@@ -1,3 +1,21 @@
+7.7
+---
+* Un-registed players group (firebase).
+
+7.6
+---
+* When hello IBS fails, IBS is dead, player is alive.
+* More logging for the upgrade mechanism.
+
+7.5
+---
+* fixed upgrade url.
+
+7.4
+---
+* Dashboard support (firebase).
+
+
 7.3
 ---
 * Settings remote button fixed to support more devices (need to verify)
