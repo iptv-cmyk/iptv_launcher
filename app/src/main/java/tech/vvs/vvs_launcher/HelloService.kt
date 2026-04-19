@@ -77,6 +77,7 @@ class HelloService : Service() {
             while (isActive) {
                 val result = pingIBS()
                 updateFirestoreHeartbeat(result)
+                syncChannelsToFirestore()            // keep channel list fresh
                 if (result == PingResult.IBS_UNREACHABLE || result == PingResult.IBS_ERROR) {
                     Log.w(TAG, "Ping failed ($result). Triggering discovery service...")
                     try {
@@ -88,6 +89,86 @@ class HelloService : Service() {
                 }
                 delay(PING_INTERVAL_MS)
             }
+        }
+    }
+
+    /**
+     * Fetches the channel list URL from SharedPrefs, parses channel names,
+     * and writes them to the player's Firestore document so the dashboard
+     * can show which channels this player has.
+     */
+    private fun syncChannelsToFirestore() {
+        try {
+            val prefs      = getSharedPreferences("vvs_prefs", Context.MODE_PRIVATE)
+            val channelUrl = prefs.getString("channel_list_url", null)
+            if (channelUrl.isNullOrEmpty()) return
+
+            val hotelName = prefs.getString("hotel_name", null)
+            val deviceId  = DeviceManager.getOrCreateDeviceId(applicationContext)
+            val db        = FirebaseFirestore.getInstance()
+
+            // Fetch the .u38 / m3u file
+            val content = try {
+                val conn = java.net.URL(channelUrl).openConnection()
+                conn.connectTimeout = 5_000
+                conn.readTimeout    = 10_000
+                conn.getInputStream().bufferedReader().readText()
+            } catch (e: Exception) {
+                Log.w(TAG, "Channel list fetch failed: ${e.message}")
+                return
+            }
+
+            // Parse channel names (same logic as ChannelViewModel)
+            val names = mutableListOf<String>()
+            var pendingName: String? = null
+            var index = 1
+            for (line in content.lines()) {
+                val trimmed = line.trim()
+                if (trimmed.isEmpty()) continue
+                if (trimmed.startsWith("#")) {
+                    if (trimmed.startsWith("#EXTINF", ignoreCase = true)) {
+                        val comma = trimmed.indexOf(',')
+                        if (comma >= 0 && comma < trimmed.length - 1)
+                            pendingName = trimmed.substring(comma + 1).trim()
+                    }
+                    continue
+                }
+                val protocols = listOf("udp://", "http://", "https://")
+                val uriStart = protocols.mapNotNull { p ->
+                    val idx = trimmed.indexOf(p, ignoreCase = true)
+                    if (idx >= 0) idx else null
+                }.minOrNull() ?: continue
+
+                val namePart = trimmed.substring(0, uriStart).trim().trim(',', ';', ':', '=')
+                val name = when {
+                    namePart.isNotEmpty()        -> namePart
+                    !pendingName.isNullOrEmpty() -> pendingName!!
+                    else                         -> "Channel $index"
+                }
+                names.add(name)
+                pendingName = null
+                index++
+            }
+
+            val channelData = mapOf<String, Any>(
+                "channel_list_url" to channelUrl,
+                "channel_count"    to names.size,
+                "channels"         to names
+            )
+
+            val ref = if (!hotelName.isNullOrEmpty()) {
+                db.collection("hotels").document(hotelName)
+                    .collection("players").document(deviceId)
+            } else {
+                db.collection("unregistered_players").document(deviceId)
+            }
+
+            ref.update(channelData)
+                .addOnSuccessListener { Log.d(TAG, "Channels synced: ${names.size}") }
+                .addOnFailureListener { e -> Log.e(TAG, "Channel sync failed", e) }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "syncChannelsToFirestore exception", e)
         }
     }
 
@@ -163,6 +244,8 @@ class HelloService : Service() {
                 .update(updates)
                 .addOnSuccessListener {
                     Log.d(TAG, "Firestore heartbeat: is_alive=true, ibs_reachable=$ibsReachable (ping=$result)")
+                    // Defensive cleanup: remove from unregistered list if we are now registered
+                    db.collection("unregistered_players").document(deviceId).delete()
                 }
                 .addOnFailureListener { e -> Log.e(TAG, "Firestore heartbeat update failed", e) }
         } catch (e: Exception) {

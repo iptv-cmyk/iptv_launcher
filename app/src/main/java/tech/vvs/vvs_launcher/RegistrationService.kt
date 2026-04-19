@@ -182,14 +182,19 @@ object RegistrationService {
                 "manufacturer" to deviceInfo.optString("manufacturer", ""),
                 "brand" to deviceInfo.optString("brand", ""),
                 "sdk" to deviceInfo.optInt("sdk", 0),
-                "release" to deviceInfo.optString("release", "")
+                "release" to deviceInfo.optString("release", ""),
+                "ibs_reachable" to true
             )
             db.collection("hotels")
                 .document(hotelName)
                 .collection("players")
                 .document(deviceId)
                 .set(playerData, SetOptions.merge())
-                .addOnSuccessListener { Log.d(TAG, "Player doc written: $deviceId in $hotelName") }
+                .addOnSuccessListener { 
+                    Log.d(TAG, "Player doc written: $deviceId in $hotelName")
+                    // Clean up unregistered record now that we are registered
+                    db.collection("unregistered_players").document(deviceId).delete()
+                }
                 .addOnFailureListener { e -> Log.e(TAG, "Failed to write player doc", e) }
 
         } catch (e: Exception) {

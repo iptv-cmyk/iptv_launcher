@@ -109,6 +109,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var adapter: ChannelAdapter
     private lateinit var channelsButton: View
+    private var dpadUpClickCount = 0
+    private val resetDpadUpClickCounterRunnable = Runnable { dpadUpClickCount = 0 }
     private lateinit var multicastLock: WifiManager.MulticastLock
     
     private val osdHandler = Handler(Looper.getMainLooper())
@@ -567,6 +569,17 @@ class MainActivity : AppCompatActivity() {
                     event.keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
                     buttonsOverlayHandler.removeCallbacks(hideFloatingButtonsRunnable)
                     buttonsOverlayHandler.postDelayed(hideFloatingButtonsRunnable, 10_000)
+                }
+            }
+
+            if (event.keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP) {
+                dpadUpClickCount++
+                buttonsOverlayHandler.removeCallbacks(resetDpadUpClickCounterRunnable)
+                buttonsOverlayHandler.postDelayed(resetDpadUpClickCounterRunnable, 3000)
+                if (dpadUpClickCount >= 5) {
+                    dpadUpClickCount = 0
+                    showExitDialog()
+                    return true
                 }
             }
 
@@ -1196,6 +1209,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun showExitDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.exit_title)
+            .setMessage(R.string.exit_message)
+            .setPositiveButton(R.string.yes) { _, _ ->
+                finishAffinity()
+            }
+            .setNegativeButton(R.string.no, null)
+            .create()
+            .also { confirmDialog ->
+                confirmDialog.show()
+                val btnColor = ContextCompat.getColor(this, R.color.colorPrimaryDialogButton)
+                confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(btnColor)
+                confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(btnColor)
+            }
+    }
+
     private fun showTechDialog() {
     val dialogView = layoutInflater.inflate(R.layout.dialog_tech, null)
     
@@ -1260,20 +1290,7 @@ class MainActivity : AppCompatActivity() {
 
     val exitAppButton = dialogView.findViewById<android.widget.Button>(R.id.exitAppButton)
     exitAppButton.setOnClickListener {
-        AlertDialog.Builder(this@MainActivity)
-            .setTitle(R.string.exit_title)
-            .setMessage(R.string.exit_message)
-            .setPositiveButton(R.string.yes) { _, _ ->
-                finishAffinity()
-            }
-            .setNegativeButton(R.string.no, null)
-            .create()
-            .also { confirmDialog ->
-                confirmDialog.show()
-                val btnColor = ContextCompat.getColor(applicationContext, R.color.colorPrimaryDialogButton)
-                confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(btnColor)
-                confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(btnColor)
-            }
+        showExitDialog()
     }
 
     val dialog = AlertDialog.Builder(this)
@@ -1487,6 +1504,8 @@ class MainActivity : AppCompatActivity() {
                 val jsonObject = JSONObject(response)
                 
                 val latestVersionCode = jsonObject.optInt("latest_version", -1)
+                val downloadUrl = jsonObject.optString("download_url")
+
                 val currentVersionCode = BuildConfig.VERSION_CODE
 
                 
@@ -1495,7 +1514,7 @@ class MainActivity : AppCompatActivity() {
 
                 if (latestVersionCode > currentVersionCode) {
                     withContext(Dispatchers.Main) {
-                        showForceUpdateDialog(latestVersionCode, currentVersionCode)
+                        showForceUpdateDialog(latestVersionCode, currentVersionCode, downloadUrl)
                     }
                 }
             } catch (e: Exception) {
@@ -1504,7 +1523,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showForceUpdateDialog(latestVer: Int, currentVer: Int) {
+    private fun showForceUpdateDialog(latestVer: Int, currentVer: Int, downloadUrl: String) {
         // Stop playback if playing
         if (this::player.isInitialized) {
             player.pause()
@@ -1523,13 +1542,11 @@ class MainActivity : AppCompatActivity() {
                 try {
                     val intent = Intent(Intent.ACTION_VIEW)
                     //intent.data = Uri.parse("market://details?id=tech.vvs.vvs_launcher")
-                    intent.data = Uri.parse("market://details?id=" + packageInfo.packageName)
+                    //intent.data = Uri.parse("market://details?id=" + packageInfo.packageName)
+                    intent.data = Uri.parse(downloadUrl)
                     startActivity(intent)
                 } catch (e: Exception) {
-                    // Fallback to web browser if Play Store is not installed
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = Uri.parse("https://play.google.com/store/apps/details?id=" + packageInfo.packageName)
-                    startActivity(intent)
+                    Log.e("VVS_TV_LOG", "Failed to download version", e)
                 }
                 // Close the app so they can't bypass it, or you can let the dialog stay active
                 finish()

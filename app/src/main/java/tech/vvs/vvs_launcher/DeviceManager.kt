@@ -2,6 +2,7 @@ package tech.vvs.vvs_launcher
 
 import android.content.Context
 import android.provider.Settings
+import android.util.Log
 import java.util.UUID
 
 object DeviceManager {
@@ -18,6 +19,9 @@ object DeviceManager {
             // Get Android ID
             try {
                 deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+                Log.d("DeviceManager", "got Android ID from Settings.Secure: $deviceId")
+
+
             } catch (e: Exception) {
                 // Fallback if something goes wrong
                 e.printStackTrace()
@@ -26,6 +30,7 @@ object DeviceManager {
             // Fallback to UUID if Android ID is null or empty (e.g. some emulators)
             if (deviceId.isNullOrEmpty()) {
                 deviceId = UUID.randomUUID().toString().replace("-", "")
+                Log.w("DeviceManager", "got Android ID from UUID: $deviceId")
             }
             
             // Save to prefs

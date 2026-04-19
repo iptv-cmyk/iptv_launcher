@@ -1,6 +1,16 @@
-7.7
+7.9
+----
+* fixed duplicate devices in hotel and un-registered.
+
+7.8
 ---
-* Un-registed players group (firebase).
+* Un-register players group (firebase).
+* show channel list firebase.
+* Show Netflix status firebase.
+* dynamic upgrade download url.
+* quick exit hidden mechanism (tap quickly 5 times on the remote up button).
+
+
 
 7.6
 ---
