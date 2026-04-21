@@ -1,3 +1,9 @@
+8.0
+---
+* Exit not allowed when isDrawerOpen.
+* positive on focus on exit menu.
+* Fixed left dpad to open channels.
+
 7.9
 ----
 * fixed duplicate devices in hotel and un-registered.

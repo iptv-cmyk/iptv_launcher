@@ -331,6 +331,7 @@ class MainActivity : AppCompatActivity() {
         drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) = cancelChannelAutoHide()
             override fun onDrawerOpened(drawerView: View) {
+                dpadUpClickCount = 0
                 scheduleChannelAutoHide(4000)
                 scrollToSelectedChannel()
             }
@@ -573,13 +574,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (event.keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP) {
-                dpadUpClickCount++
-                buttonsOverlayHandler.removeCallbacks(resetDpadUpClickCounterRunnable)
-                buttonsOverlayHandler.postDelayed(resetDpadUpClickCounterRunnable, 3000)
-                if (dpadUpClickCount >= 5) {
-                    dpadUpClickCount = 0
-                    showExitDialog()
-                    return true
+                val isDrawerOpen = this@MainActivity::drawerLayout.isInitialized && drawerLayout.isDrawerOpen(GravityCompat.START)
+                if (!isDrawerOpen) {
+                    dpadUpClickCount++
+                    buttonsOverlayHandler.removeCallbacks(resetDpadUpClickCounterRunnable)
+                    buttonsOverlayHandler.postDelayed(resetDpadUpClickCounterRunnable, 3000)
+                    if (dpadUpClickCount >= 5) {
+                        dpadUpClickCount = 0
+                        showExitDialog()
+                        return true
+                    }
                 }
             }
 
@@ -618,18 +622,19 @@ class MainActivity : AppCompatActivity() {
                     return true
                 }
                 android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                    val hasMedia = this@MainActivity::player.isInitialized && player.mediaItemCount > 0
-                    if (hasMedia && 
-                        (this@MainActivity::welcomeStateContainer.isInitialized && welcomeStateContainer.visibility == View.GONE) &&
-                        (this@MainActivity::floatingButtonsContainer.isInitialized && floatingButtonsContainer.visibility != View.VISIBLE)) {
+                    if (this@MainActivity::drawerLayout.isInitialized && 
+                        !drawerLayout.isDrawerOpen(GravityCompat.START) && 
+                        adapter.itemCount > 0) {
                         
-                        if (this@MainActivity::drawerLayout.isInitialized && !drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START) && adapter.itemCount > 0) {
-                            drawerLayout.openDrawer(androidx.core.view.GravityCompat.START)
+                        val isOverlayVisible = this@MainActivity::floatingButtonsContainer.isInitialized && 
+                                              floatingButtonsContainer.visibility == View.VISIBLE
+                        
+                        if (!isOverlayVisible || currentFocus?.id == R.id.channelsButton) {
+                            drawerLayout.openDrawer(GravityCompat.START)
                             scrollToSelectedChannel()
                             return true
                         }
                     }
-                    // Standard focus traversal handles moving left between buttons.
                     return super.dispatchKeyEvent(event)
                 }
                 android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
@@ -1221,7 +1226,9 @@ class MainActivity : AppCompatActivity() {
             .also { confirmDialog ->
                 confirmDialog.show()
                 val btnColor = ContextCompat.getColor(this, R.color.colorPrimaryDialogButton)
-                confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(btnColor)
+                val positiveBtn = confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                positiveBtn.setTextColor(btnColor)
+                positiveBtn.requestFocus()
                 confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(btnColor)
             }
     }
