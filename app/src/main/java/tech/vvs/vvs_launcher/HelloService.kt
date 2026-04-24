@@ -20,10 +20,12 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import org.json.JSONObject
 import java.util.Arrays
+import com.google.firebase.firestore.ListenerRegistration
 
 class HelloService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + Job())
+    private var commandListenerRegistration: ListenerRegistration? = null
 
     /** Result of a single IBS ping attempt. */
     private enum class PingResult {
@@ -67,6 +69,7 @@ class HelloService : Service() {
         startForeground(NOTIFICATION_ID, notification)
 
         startPingLoop()
+        startCommandListener()
 
         // START_STICKY tells OS to recreate the service if it gets killed
         return START_STICKY
@@ -172,6 +175,58 @@ class HelloService : Service() {
         }
     }
 
+    private fun startCommandListener() {
+        try {
+            val deviceId = DeviceManager.getOrCreateDeviceId(applicationContext)
+            val prefs = getSharedPreferences("vvs_prefs", Context.MODE_PRIVATE)
+            val hotelName = prefs.getString("hotel_name", null)
+            val db = FirebaseFirestore.getInstance()
+
+            val docRef = if (!hotelName.isNullOrEmpty()) {
+                db.collection("hotels").document(hotelName).collection("players").document(deviceId)
+            } else {
+                db.collection("unregistered_players").document(deviceId)
+            }
+
+            commandListenerRegistration?.remove()
+            commandListenerRegistration = docRef.addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.w(TAG, "Command listen failed.", e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    val command = snapshot.getString("command")
+                    val commandId = snapshot.getString("command_id")
+                    
+                    if (!commandId.isNullOrEmpty()) {
+                        val lastExecuted = prefs.getString("last_executed_command_id", null)
+                        if (commandId != lastExecuted) {
+                            Log.d(TAG, "Executing command: $command ($commandId)")
+                            prefs.edit().putString("last_executed_command_id", commandId).apply()
+                            
+                            when (command) {
+                                "reset_netflix" -> {
+                                    val intent = Intent(applicationContext, NetflixResetReceiver::class.java)
+                                    sendBroadcast(intent)
+                                }
+                                "reboot" -> {
+                                    val intent = Intent(applicationContext, RebootReceiver::class.java)
+                                    sendBroadcast(intent)
+                                }
+                                else -> {
+                                    Log.w(TAG, "Unknown command: $command")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "startCommandListener exception", e)
+        }
+    }
+
     /**
      * Updates the player's heartbeat in Firestore after each hourly ping.
      *
@@ -246,6 +301,9 @@ class HelloService : Service() {
                     Log.d(TAG, "Firestore heartbeat: is_alive=true, ibs_reachable=$ibsReachable (ping=$result)")
                     // Defensive cleanup: remove from unregistered list if we are now registered
                     db.collection("unregistered_players").document(deviceId).delete()
+                    
+                    // Restart command listener in case we just transitioned from unregistered to registered
+                    startCommandListener()
                 }
                 .addOnFailureListener { e -> Log.e(TAG, "Firestore heartbeat update failed", e) }
         } catch (e: Exception) {
@@ -376,6 +434,7 @@ class HelloService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "HelloService destroyed")
+        commandListenerRegistration?.remove()
         serviceScope.cancel()
     }
 }

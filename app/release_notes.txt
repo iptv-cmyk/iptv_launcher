@@ -1,3 +1,13 @@
+8.2
+---
+* dashboard commands support.
+* Netflix reset remote command.
+* reboot remote command.
+
+8.1
+---
+* Fixed dpad buttons channels selection bug.
+
 8.0
 ---
 * Exit not allowed when isDrawerOpen.

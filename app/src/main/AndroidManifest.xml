@@ -78,6 +78,7 @@
             android:exported="false" />
 
         <receiver android:name="tech.vvs.vvs_launcher.NetflixResetReceiver" android:exported="false" />
+        <receiver android:name="tech.vvs.vvs_launcher.RebootReceiver" android:exported="false" />
 
         <service
             android:name=".HomeButtonAccessibilityService"

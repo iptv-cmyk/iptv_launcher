@@ -591,6 +591,11 @@ class MainActivity : AppCompatActivity() {
                 android.view.KeyEvent.KEYCODE_DPAD_CENTER,
                 android.view.KeyEvent.KEYCODE_ENTER,
                 android.view.KeyEvent.KEYCODE_NUMPAD_ENTER -> {
+                    val isDrawerOpen = this@MainActivity::drawerLayout.isInitialized && drawerLayout.isDrawerOpen(GravityCompat.START)
+                    if (isDrawerOpen) {
+                        return super.dispatchKeyEvent(event)
+                    }
+
                     val hasMedia = this@MainActivity::player.isInitialized && player.mediaItemCount > 0
                     if (hasMedia && (this@MainActivity::welcomeStateContainer.isInitialized && welcomeStateContainer.visibility == View.GONE)) {
                         if (floatingButtonsContainer.visibility != View.VISIBLE) {
