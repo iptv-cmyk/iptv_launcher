@@ -1,7 +1,8 @@
-8.4
+8.5
 ---
 * Power-off intercepted, opens welcome.
 * Settings button do not open about (dpad down does).
+* Intercepted other remote buttons (freeTV, etc, and disabled).
 
 8.3
 ---

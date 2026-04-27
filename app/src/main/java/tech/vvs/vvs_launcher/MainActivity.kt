@@ -1041,6 +1041,11 @@ class MainActivity : AppCompatActivity() {
         val versionButton = dialogView.findViewById<android.widget.Button>(R.id.versionButton)
         versionButton.text = versionText
 
+        val aboutMessage = dialogView.findViewById<android.widget.TextView>(R.id.aboutMessage)
+        val deviceId = DeviceManager.getOrCreateDeviceId(this)
+        val currentText = getString(R.string.about_message)
+        aboutMessage.text = "$currentText\n\nDevice ID: $deviceId"
+
         var tapCount = 0
         val resetTapRunnable = Runnable { tapCount = 0 }
         val tapHandler = Handler(Looper.getMainLooper())
