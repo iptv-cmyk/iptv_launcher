@@ -52,6 +52,13 @@ public class HomeButtonAccessibilityService extends AccessibilityService {
             // acting on the key release event as well.
             return true;
         }
+        if (keyCode == KeyEvent.KEYCODE_POWER || keyCode == KeyEvent.KEYCODE_SLEEP || keyCode == KeyEvent.KEYCODE_SOFT_SLEEP) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                Log.d(TAG, "Intercepted Power/Sleep button press");
+                launchApp();
+            }
+            return false; // Let the system handle it and send poweroff to the TV via HDMI-CEC
+        }
         return super.onKeyEvent(event);
     }
 

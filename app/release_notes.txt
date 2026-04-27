@@ -1,3 +1,12 @@
+8.4
+---
+* Power-off intercepted, opens welcome.
+* Settings button do not open about (dpad down does).
+
+8.3
+---
+* 5 clicks on dpad down opens the about dialog.
+
 8.2
 ---
 * dashboard commands support.

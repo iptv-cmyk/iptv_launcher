@@ -111,6 +111,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var channelsButton: View
     private var dpadUpClickCount = 0
     private val resetDpadUpClickCounterRunnable = Runnable { dpadUpClickCount = 0 }
+    private var dpadDownClickCount = 0
+    private val resetDpadDownClickCounterRunnable = Runnable { dpadDownClickCount = 0 }
     private lateinit var multicastLock: WifiManager.MulticastLock
     
     private val osdHandler = Handler(Looper.getMainLooper())
@@ -332,6 +334,7 @@ class MainActivity : AppCompatActivity() {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) = cancelChannelAutoHide()
             override fun onDrawerOpened(drawerView: View) {
                 dpadUpClickCount = 0
+                dpadDownClickCount = 0
                 scheduleChannelAutoHide(4000)
                 scrollToSelectedChannel()
             }
@@ -582,6 +585,20 @@ class MainActivity : AppCompatActivity() {
                     if (dpadUpClickCount >= 5) {
                         dpadUpClickCount = 0
                         showExitDialog()
+                        return true
+                    }
+                }
+            }
+
+            if (event.keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                val isDrawerOpen = this@MainActivity::drawerLayout.isInitialized && drawerLayout.isDrawerOpen(GravityCompat.START)
+                if (!isDrawerOpen) {
+                    dpadDownClickCount++
+                    buttonsOverlayHandler.removeCallbacks(resetDpadDownClickCounterRunnable)
+                    buttonsOverlayHandler.postDelayed(resetDpadDownClickCounterRunnable, 3000)
+                    if (dpadDownClickCount >= 5) {
+                        dpadDownClickCount = 0
+                        showAboutDialog()
                         return true
                     }
                 }
