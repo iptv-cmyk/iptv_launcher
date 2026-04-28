@@ -1,3 +1,13 @@
+8.6
+---
+* Channels up / down bug (reversed).
+* Buffer issue fixed (going external will not buffer anymore) returning to vvs will take to welcome.
+* Player crash issue handled (trying to restart the exoplayer, if failed most likely the media stack crash, recovered only by restarting the box),
+  This is the crash log:
+  Error: MediaCodecVideoRenderer error, index=1, format=Format(1/481, null, null, video/avc, avc1.64002A, -1, null, [1920, 1080, -1.0, ColorInfo(BT709, Limited range, SDR SMPTE 170M, false, 8bit Luma, 8bit Chroma)], [-1, -1]), format_supported=YES (Fix with AI)
+  androidx.media3.exoplayer.ExoPlaybackException: MediaCodecVideoRenderer error, index=1, format=Format(1/481, null, null, video/avc, avc1.64002A, -1, null, [1920, 1080, -1.0, ColorInfo(BT709, Limited range, SDR SMPTE 170M, false, 8bit Luma, 8bit Chroma)], [-1, -1]), format_supported=YES
+
+
 8.5
 ---
 * Power-off intercepted, opens welcome.

@@ -621,17 +621,17 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-                android.view.KeyEvent.KEYCODE_CHANNEL_UP,
+                android.view.KeyEvent.KEYCODE_CHANNEL_DOWN,
                 android.view.KeyEvent.KEYCODE_MEDIA_NEXT,
                 android.view.KeyEvent.KEYCODE_PAGE_UP,
-                166 -> {
+                167 -> {
                     selectNextChannel()
                     return true
                 }
-                android.view.KeyEvent.KEYCODE_CHANNEL_DOWN,
+                android.view.KeyEvent.KEYCODE_CHANNEL_UP,
                 android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS,
                 android.view.KeyEvent.KEYCODE_PAGE_DOWN,
-                167 -> {
+                166 -> {
                     selectPreviousChannel()
                     return true
                 }
@@ -803,6 +803,12 @@ class MainActivity : AppCompatActivity() {
 
                     override fun onPlayerError(error: PlaybackException) {
                         Log.e("VVS_TV_LOG", "Player Error: ${error.message}", error)
+                        // send toast
+                        Toast.makeText(this@MainActivity, "Player Error trying to recover (if persists, reboot box)", Toast.LENGTH_LONG).show()
+                        // Recover from error by restarting the stream after a short delay
+                        stallHandler.postDelayed({
+                            restartCurrentStream()
+                        }, 2000)
                     }
                 })
             }
@@ -1519,9 +1525,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        player.pause()
-        if (multicastLock.isHeld) multicastLock.release()
-        stallHandler.removeCallbacks(stallChecker)
+        returnToWelcomeScreen()
     }
 
     // check app upgrade
