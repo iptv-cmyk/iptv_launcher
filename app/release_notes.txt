@@ -1,6 +1,7 @@
 8.7
 ---
 * Channels up / down (reversed again).
+* test
 
 8.6
 ---
