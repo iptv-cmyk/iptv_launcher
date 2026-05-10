@@ -1,3 +1,7 @@
+8.7
+---
+* Channels up / down (reversed again).
+
 8.6
 ---
 * Channels up / down bug (reversed).

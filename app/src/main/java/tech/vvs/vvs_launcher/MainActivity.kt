@@ -625,14 +625,14 @@ class MainActivity : AppCompatActivity() {
                 android.view.KeyEvent.KEYCODE_MEDIA_NEXT,
                 android.view.KeyEvent.KEYCODE_PAGE_UP,
                 167 -> {
-                    selectNextChannel()
+                    selectPreviousChannel()
                     return true
                 }
                 android.view.KeyEvent.KEYCODE_CHANNEL_UP,
                 android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS,
                 android.view.KeyEvent.KEYCODE_PAGE_DOWN,
                 166 -> {
-                    selectPreviousChannel()
+                    selectNextChannel()
                     return true
                 }
                 android.view.KeyEvent.KEYCODE_SETTINGS,
