@@ -621,16 +621,18 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-                android.view.KeyEvent.KEYCODE_CHANNEL_DOWN,
-                android.view.KeyEvent.KEYCODE_MEDIA_NEXT,
-                android.view.KeyEvent.KEYCODE_PAGE_UP,
+//                android.view.KeyEvent.KEYCODE_CHANNEL_DOWN,
+//                android.view.KeyEvent.KEYCODE_MEDIA_NEXT,
+//                android.view.KeyEvent.KEYCODE_PAGE_UP,
+                // program down
                 167 -> {
                     selectPreviousChannel()
                     return true
                 }
-                android.view.KeyEvent.KEYCODE_CHANNEL_UP,
-                android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS,
-                android.view.KeyEvent.KEYCODE_PAGE_DOWN,
+//                android.view.KeyEvent.KEYCODE_CHANNEL_UP,
+//                android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+//                android.view.KeyEvent.KEYCODE_PAGE_DOWN,
+                // program up
                 166 -> {
                     selectNextChannel()
                     return true

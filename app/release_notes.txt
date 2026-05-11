@@ -1,3 +1,7 @@
+8.8
+---
+* Another fix to P up/down (did not work reliably on dcolor).
+
 8.7
 ---
 * Channels up / down (reversed again).
