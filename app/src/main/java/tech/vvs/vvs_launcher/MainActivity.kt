@@ -1537,7 +1537,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 // Replace this URL with the actual URL where you host the version.json file
-                val url = "https://raw.githubusercontent.com/elich111/elich111.github.io/refs/heads/main/version.json"
+                val url = "https://raw.githubusercontent.com/hassoneli/hassoneli.github.io/refs/heads/main/vvs_version.json"
                 
                 // Using a generic try-catch to avoid crashing if URL is invalid or network is down
                 val response = java.net.URL(url).readText()
@@ -1547,6 +1547,7 @@ class MainActivity : AppCompatActivity() {
                 val downloadUrl = jsonObject.optString("download_url")
 
                 val currentVersionCode = BuildConfig.VERSION_CODE
+                //val currentVersionCode = packageManager.getPackageInfo(packageName, 0).versionCode
 
                 
                 Log.d("VVS_TV_LOG", "App " +

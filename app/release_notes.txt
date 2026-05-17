@@ -1,3 +1,20 @@
+9.2
+---
+* Icon fixed.
+
+9.1
+----
+* dash load channels failed bug fix.
+
+9.0
+---
+* Dash Load channels on demand to save reads.
+
+8.9
+---
+* More optimizations for Firebase.
+* Internal upgrade mechanism fixed.
+
 8.8
 ---
 * Another fix to P up/down (did not work reliably on dcolor).

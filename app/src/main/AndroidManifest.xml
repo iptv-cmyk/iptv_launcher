@@ -35,8 +35,8 @@
         android:supportsRtl="false"
         android:usesCleartextTraffic="true"
         android:appCategory="video"
-        android:icon="@drawable/app_banner"
-        android:roundIcon="@drawable/app_banner"
+        android:icon="@drawable/v_logo"
+        android:roundIcon="@drawable/v_logo"
         android:banner="@drawable/app_banner"
         android:logo="@drawable/app_banner"
         android:theme="@style/Theme.MulticastPlayer">

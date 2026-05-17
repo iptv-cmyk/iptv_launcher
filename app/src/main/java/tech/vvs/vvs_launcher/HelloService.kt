@@ -75,12 +75,14 @@ class HelloService : Service() {
         return START_STICKY
     }
 
+    private var pingJob: Job? = null
+
     private fun startPingLoop() {
-        serviceScope.launch {
+        pingJob?.cancel()
+        pingJob = serviceScope.launch {
             while (isActive) {
                 val result = pingIBS()
                 updateFirestoreHeartbeat(result)
-                syncChannelsToFirestore()            // keep channel list fresh
                 if (result == PingResult.IBS_UNREACHABLE || result == PingResult.IBS_ERROR) {
                     Log.w(TAG, "Ping failed ($result). Triggering discovery service...")
                     try {
@@ -156,8 +158,10 @@ class HelloService : Service() {
             val channelData = mapOf<String, Any>(
                 "channel_list_url" to channelUrl,
                 "channel_count"    to names.size,
-                "channels"         to names
+                "channels"         to com.google.firebase.firestore.FieldValue.delete()
             )
+
+            val channelListData = mapOf("channels" to names)
 
             val ref = if (!hotelName.isNullOrEmpty()) {
                 db.collection("hotels").document(hotelName)
@@ -167,13 +171,19 @@ class HelloService : Service() {
             }
 
             ref.update(channelData)
-                .addOnSuccessListener { Log.d(TAG, "Channels synced: ${names.size}") }
+                .addOnSuccessListener {
+                    ref.collection("channel_data").document("channels").set(channelListData)
+                        .addOnSuccessListener { Log.d(TAG, "Channels synced to subcollection: ${names.size}") }
+                        .addOnFailureListener { e -> Log.e(TAG, "Channel subcollection sync failed", e) }
+                }
                 .addOnFailureListener { e -> Log.e(TAG, "Channel sync failed", e) }
 
         } catch (e: Exception) {
             Log.e(TAG, "syncChannelsToFirestore exception", e)
         }
     }
+
+    private var currentCommandListenerPath: String? = null
 
     private fun startCommandListener() {
         try {
@@ -186,6 +196,10 @@ class HelloService : Service() {
                 db.collection("hotels").document(hotelName).collection("players").document(deviceId)
             } else {
                 db.collection("unregistered_players").document(deviceId)
+            }
+
+            if (currentCommandListenerPath == docRef.path) {
+                return
             }
 
             commandListenerRegistration?.remove()
@@ -214,6 +228,11 @@ class HelloService : Service() {
                                     val intent = Intent(applicationContext, RebootReceiver::class.java)
                                     sendBroadcast(intent)
                                 }
+                                "get_channels" -> {
+                                    serviceScope.launch {
+                                        syncChannelsToFirestore()
+                                    }
+                                }
                                 else -> {
                                     Log.w(TAG, "Unknown command: $command")
                                 }
@@ -222,6 +241,7 @@ class HelloService : Service() {
                     }
                 }
             }
+            currentCommandListenerPath = docRef.path
         } catch (e: Exception) {
             Log.e(TAG, "startCommandListener exception", e)
         }
