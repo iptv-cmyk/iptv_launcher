@@ -1,6 +1,14 @@
+9.4
+---
+* More dash read optimizations.
+
+9.3
+----
+* Icon fix 2.
+
 9.2
 ---
-* Icon fixed.
+* Icon fixed try 1.
 
 9.1
 ----

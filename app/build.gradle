@@ -16,8 +16,8 @@ android {
         applicationId 'tech.vvs.vvs_launcher'
         minSdk 21
         targetSdk 35
-        versionCode 92
-        versionName '9.2'
+        versionCode 94
+        versionName '9.4'
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 

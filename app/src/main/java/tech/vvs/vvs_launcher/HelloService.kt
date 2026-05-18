@@ -81,16 +81,20 @@ class HelloService : Service() {
         pingJob?.cancel()
         pingJob = serviceScope.launch {
             while (isActive) {
-                val result = pingIBS()
-                updateFirestoreHeartbeat(result)
-                if (result == PingResult.IBS_UNREACHABLE || result == PingResult.IBS_ERROR) {
-                    Log.w(TAG, "Ping failed ($result). Triggering discovery service...")
-                    try {
-                        val discoveryIntent = Intent(applicationContext, IBSDiscoveryService::class.java)
-                        startService(discoveryIntent)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to start discovery service", e)
+                try {
+                    val result = pingIBS()
+                    updateFirestoreHeartbeat(result)
+                    if (result == PingResult.IBS_UNREACHABLE || result == PingResult.IBS_ERROR) {
+                        Log.w(TAG, "Ping failed ($result). Triggering discovery service...")
+                        try {
+                            val discoveryIntent = Intent(applicationContext, IBSDiscoveryService::class.java)
+                            startService(discoveryIntent)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to start discovery service", e)
+                        }
                     }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception in ping loop", e)
                 }
                 delay(PING_INTERVAL_MS)
             }
