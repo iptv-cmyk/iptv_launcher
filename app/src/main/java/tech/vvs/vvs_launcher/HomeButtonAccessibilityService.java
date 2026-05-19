@@ -1,7 +1,9 @@
 package tech.vvs.vvs_launcher;
 
 import android.accessibilityservice.AccessibilityService;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -17,6 +19,10 @@ public class HomeButtonAccessibilityService extends AccessibilityService {
     private static final String PREF_PENDING_HOME_RESET = "pending_home_reset";
     private static final String EXTRA_OPEN_ABOUT = "open_about";
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+
+
+
 
     private final android.content.BroadcastReceiver screenOffReceiver = new android.content.BroadcastReceiver() {
         @Override
@@ -96,11 +102,17 @@ public class HomeButtonAccessibilityService extends AccessibilityService {
             // acting on the key release event as well.
             return true;
         }
-        if (keyCode == 172 || keyCode == 5120 || keyCode == 5119 || keyCode == 5116 || keyCode == 5122) {
-            if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                Log.d(TAG, "Intercepted TV button press: " + keyCode);
+        // other keys swallow
+        if (!getSharedPreferences("vvs_prefs", Context.MODE_PRIVATE).getBoolean("is_allow_remote_keys", false)) {
+            if (keyCode == 172 || keyCode == 5120 || keyCode == 5119 || keyCode == 5116 || keyCode == 5122 || keyCode == 284) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    Log.d(TAG, "Intercepted TV button press: " + keyCode);
+                }
+                return true;
             }
-            return true;
+        }
+        else {
+            Log.d(TAG, "allow remote keys: " + keyCode);
         }
 
         if (keyCode == KeyEvent.KEYCODE_POWER || keyCode == KeyEvent.KEYCODE_SLEEP || keyCode == KeyEvent.KEYCODE_SOFT_SLEEP) {

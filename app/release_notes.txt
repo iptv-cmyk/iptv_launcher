@@ -1,3 +1,8 @@
+9.5
+----
+* Intercepted apps remote button.
+* Added mechanism in the tech menu to allow remote buttons.
+
 9.4
 ---
 * More dash read optimizations.

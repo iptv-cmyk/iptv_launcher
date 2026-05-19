@@ -51,6 +51,12 @@
             android:layout_height="wrap_content"
             android:text="Is Manual" />
 
+        <CheckBox
+            android:id="@+id/allowRemoteKeysCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Is allow remote keys" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

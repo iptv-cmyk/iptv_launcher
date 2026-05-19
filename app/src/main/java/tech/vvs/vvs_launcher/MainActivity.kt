@@ -1279,6 +1279,8 @@ class MainActivity : AppCompatActivity() {
     val netflixResetCheck = dialogView.findViewById<android.widget.CheckBox>(R.id.netflixResetCheck)
     val netflixResetHourEdit = dialogView.findViewById<EditText>(R.id.netflixResetHourEdit)
     val manualOverrideCheck = dialogView.findViewById<android.widget.CheckBox>(R.id.manualOverrideCheck)
+
+    val allowRemoteKeysCheck = dialogView.findViewById<android.widget.CheckBox>(R.id.allowRemoteKeysCheck)
     
     val assetNames = try {
         assets.list(backgroundAssetsDir)?.sorted()
@@ -1321,6 +1323,8 @@ class MainActivity : AppCompatActivity() {
     netflixResetHourEdit.setText(savedHour.toString())
     
     manualOverrideCheck.isChecked = prefs.getBoolean("is_channel_url_manual_override", false)
+
+    allowRemoteKeysCheck.isChecked = prefs.getBoolean("is_allow_remote_keys", false)
 
     val netflixResetNowButton = dialogView.findViewById<android.widget.Button>(R.id.netflixResetNowButton)
     netflixResetNowButton.setOnClickListener {
@@ -1371,6 +1375,12 @@ class MainActivity : AppCompatActivity() {
                     putBoolean("netflix_reset_enabled", netflixResetCheck.isChecked)
                     if (hour != null) putInt("netflix_reset_hour", hour)
                 }.apply()
+
+                prefs.edit().apply() {
+                    putBoolean("is_allow_remote_keys", allowRemoteKeysCheck.isChecked)
+                }.apply()
+
+
                 
                 // Save Channel List URL and Buffer
                 val url = urlEdit.text.toString().trim()
