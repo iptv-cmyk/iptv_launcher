@@ -41,6 +41,27 @@
         android:logo="@drawable/app_banner"
         android:theme="@style/Theme.MulticastPlayer">
 
+        <receiver
+            android:name=".AdminReceiver"
+            android:label="VVS Device Admin"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".UninstallReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="tech.vvs.vvs_launcher.CLEAR_DEVICE_OWNER" />
+            </intent-filter>
+        </receiver>
+
         <!-- Splash screen is the launcher activity. It shows the logo briefly
              before launching MainActivity. -->
         <activity

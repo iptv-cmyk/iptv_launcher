@@ -4,6 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
+import android.os.Build
+import androidx.core.content.ContextCompat
 import dadb.Dadb
 import dadb.AdbKeyPair
 import kotlinx.coroutines.CoroutineScope
@@ -12,6 +16,8 @@ import kotlinx.coroutines.launch
 import java.io.File
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class NetflixResetReceiver : BroadcastReceiver() {
 
@@ -28,28 +34,18 @@ class NetflixResetReceiver : BroadcastReceiver() {
             writeNetflixStatus(hotelName, deviceId, mapOf("netflix_reset_last_attempt" to now))
 
             try {
-                val keyFile    = File(context.filesDir, "adbkey")
-                val pubKeyFile = File(context.filesDir, "adbkey.pub")
+                val dpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+                val isDeviceOwner = dpm.isDeviceOwnerApp(context.packageName)
+                val isAtLeastP = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
 
-                val keyPair = if (keyFile.exists() && pubKeyFile.exists()) {
-                    AdbKeyPair.read(keyFile, pubKeyFile)
+                val success = if (isAtLeastP && isDeviceOwner) {
+                    Log.d(TAG, "Device Owner detected and API >= 28, clearing Netflix using DevicePolicyManager...")
+                    clearNetflixUsingDpm(context, dpm)
                 } else {
-                    AdbKeyPair.generate(privateKeyFile = keyFile, publicKeyFile = pubKeyFile)
-                    AdbKeyPair.read(keyFile, pubKeyFile)
+                    Log.d(TAG, "Device Owner not active or API < 28 (DeviceOwner: $isDeviceOwner, API: ${Build.VERSION.SDK_INT}). Falling back to local ADB...")
+                    clearNetflixUsingAdb(context)
                 }
 
-                Log.d(TAG, "Connecting to local ADB...")
-                val adb = Dadb.create("127.0.0.1", 5555, keyPair)
-
-                Log.d(TAG, "Testing ADB connection...")
-                val testResponse = adb.shell("echo 'ADB Connection OK'")
-                Log.d(TAG, "Test Output: ${testResponse.output} ExitCode: ${testResponse.exitCode}")
-
-                Log.d(TAG, "Executing: pm clear com.netflix.ninja")
-                val response = adb.shell("pm clear com.netflix.ninja")
-                Log.d(TAG, "Reset Output: '${response.output}' ExitCode: ${response.exitCode}")
-
-                val success = response.exitCode == 0
                 val resultTs = Timestamp.now()
                 if (success) {
                     writeNetflixStatus(hotelName, deviceId, mapOf(
@@ -62,7 +58,7 @@ class NetflixResetReceiver : BroadcastReceiver() {
                         "netflix_reset_last_failure" to resultTs,
                         "netflix_reset_success"      to false
                     ))
-                    Log.w(TAG, "Netflix reset returned non-zero exit code")
+                    Log.w(TAG, "Netflix reset failed")
                 }
 
             } catch (e: Exception) {
@@ -73,6 +69,49 @@ class NetflixResetReceiver : BroadcastReceiver() {
                 ))
             }
         }
+    }
+
+    private suspend fun clearNetflixUsingDpm(context: Context, dpm: DevicePolicyManager): Boolean = suspendCoroutine { continuation ->
+        val admin = ComponentName(context, AdminReceiver::class.java)
+        val executor = ContextCompat.getMainExecutor(context)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                dpm.clearApplicationUserData(admin, "com.netflix.ninja", executor) { packageName, succeeded ->
+                    Log.d(TAG, "clearApplicationUserData result: package=$packageName, succeeded=$succeeded")
+                    continuation.resume(succeeded)
+                }
+            } else {
+                continuation.resume(false)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error calling clearApplicationUserData", e)
+            continuation.resume(false)
+        }
+    }
+
+    private fun clearNetflixUsingAdb(context: Context): Boolean {
+        val keyFile    = File(context.filesDir, "adbkey")
+        val pubKeyFile = File(context.filesDir, "adbkey.pub")
+
+        val keyPair = if (keyFile.exists() && pubKeyFile.exists()) {
+            AdbKeyPair.read(keyFile, pubKeyFile)
+        } else {
+            AdbKeyPair.generate(privateKeyFile = keyFile, publicKeyFile = pubKeyFile)
+            AdbKeyPair.read(keyFile, pubKeyFile)
+        }
+
+        Log.d(TAG, "Connecting to local ADB...")
+        val adb = Dadb.create("127.0.0.1", 5555, keyPair)
+
+        Log.d(TAG, "Testing ADB connection...")
+        val testResponse = adb.shell("echo 'ADB Connection OK'")
+        Log.d(TAG, "Test Output: ${testResponse.output} ExitCode: ${testResponse.exitCode}")
+
+        Log.d(TAG, "Executing: pm clear com.netflix.ninja")
+        val response = adb.shell("pm clear com.netflix.ninja")
+        Log.d(TAG, "Reset Output: '${response.output}' ExitCode: ${response.exitCode}")
+
+        return response.exitCode == 0
     }
 
     /**

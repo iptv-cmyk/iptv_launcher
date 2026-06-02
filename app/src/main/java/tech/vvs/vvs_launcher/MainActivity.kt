@@ -70,6 +70,11 @@ import java.util.Calendar
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.animation.ValueAnimator
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
+import android.os.Build
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 /**
  * Main activity hosting the video player and channel list.
@@ -1673,72 +1678,107 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    private suspend fun clearNetflixUsingDpm(dpm: DevicePolicyManager): Boolean = suspendCoroutine { continuation ->
+        val admin = ComponentName(this, AdminReceiver::class.java)
+        val executor = ContextCompat.getMainExecutor(this)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                dpm.clearApplicationUserData(admin, "com.netflix.ninja", executor) { packageName, succeeded ->
+                    Log.d("VVS_TV_LOG", "clearApplicationUserData result: package=$packageName, succeeded=$succeeded")
+                    continuation.resume(succeeded)
+                }
+            } else {
+                continuation.resume(false)
+            }
+        } catch (e: Exception) {
+            Log.e("VVS_TV_LOG", "Error calling clearApplicationUserData", e)
+            continuation.resume(false)
+        }
+    }
+
     private fun performAdbResetNetflix() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // Determine the path for the adb key in the app's internal storage
-                // This avoids the permission issue with the default .android directory
-                val keyFile = File(filesDir, "adbkey")
-                val pubKeyFile = File(filesDir, "adbkey.pub")
-                
-                val keyPair = if (keyFile.exists() && pubKeyFile.exists()) {
-                    // Read existing key pair
-                    AdbKeyPair.read(keyFile, pubKeyFile)
-                } else {
-                    // Generate new key pair and save to internal storage directly
-                    AdbKeyPair.generate(privateKeyFile = keyFile, publicKeyFile = pubKeyFile)
-                    AdbKeyPair.read(keyFile, pubKeyFile)
-                }
+                val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+                val isDeviceOwner = dpm.isDeviceOwnerApp(packageName)
+                val isAtLeastP = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
 
-                // Using 'dadb' to connect to local ADB daemon with the custom key pair
-                Log.d("VVS_TV_LOG", "Connecting to ADB 127.0.0.1:5555...")
-                val adb = Dadb.create("127.0.0.1", 5555, keyPair)
-                
-                // Diagnostic: Who are we?
-                val idRes = adb.shell("id")
-                Log.d("VVS_TV_LOG", "ADB Identity: ${idRes.output}")
-
-                Log.d("VVS_TV_LOG", "Attempting Netflix Clear...")
-                
-                var success = false
-                var message = ""
-
-                val response = adb.shell("cmd package clear com.netflix.ninja")
-                Log.d("VVS_TV_LOG", "Clear Result: Code=${response.exitCode} Out='${response.output}'")
-                
-                if (response.exitCode == 0 || response.output.contains("Success", ignoreCase = true)) {
-                    success = true
-                    message = "Netflix reset successfully"
-                } else {
-                    // Check for Permission Denial in output OR toString() (since output defaults to empty on some failures)
-                    val rawString = response.toString()
-                    val isSecurityException = response.output.contains("SecurityException") || 
-                                            response.output.contains("permission") ||
-                                            rawString.contains("SecurityException") ||
-                                            rawString.contains("permission")
-                    
-                    if (isSecurityException) {
-                        Log.d("VVS_TV_LOG", "Permission Denied for Clear. Falling back to Force Stop.")
-                        
-                        // Fallback: Force Stop
-                        adb.shell("am force-stop com.netflix.ninja")
-                        
-                        success = true 
-                        message = "Netflix Restricted: Performed Force Restart instead."
-                    } else {
-                        message = "Failed: ${response.output}"
+                if (isAtLeastP && isDeviceOwner) {
+                    Log.d("VVS_TV_LOG", "Device Owner detected and API >= 28, clearing Netflix using DevicePolicyManager...")
+                    val success = clearNetflixUsingDpm(dpm)
+                    withContext(Dispatchers.Main) {
+                        if (success) {
+                            Toast.makeText(this@MainActivity, "Netflix reset successfully (Device Owner)", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Failed to reset Netflix via Device Owner", Toast.LENGTH_LONG).show()
+                        }
                     }
-                }
+                } else {
+                    Log.d("VVS_TV_LOG", "Device Owner not active or API < 28 (DeviceOwner: $isDeviceOwner, API: ${Build.VERSION.SDK_INT}). Falling back to local ADB...")
+                    // Determine the path for the adb key in the app's internal storage
+                    // This avoids the permission issue with the default .android directory
+                    val keyFile = File(filesDir, "adbkey")
+                    val pubKeyFile = File(filesDir, "adbkey.pub")
+                    
+                    val keyPair = if (keyFile.exists() && pubKeyFile.exists()) {
+                        // Read existing key pair
+                        AdbKeyPair.read(keyFile, pubKeyFile)
+                    } else {
+                        // Generate new key pair and save to internal storage directly
+                        AdbKeyPair.generate(privateKeyFile = keyFile, publicKeyFile = pubKeyFile)
+                        AdbKeyPair.read(keyFile, pubKeyFile)
+                    }
 
-                withContext(Dispatchers.Main) {
-                     Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+                    // Using 'dadb' to connect to local ADB daemon with the custom key pair
+                    Log.d("VVS_TV_LOG", "Connecting to ADB 127.0.0.1:5555...")
+                    val adb = Dadb.create("127.0.0.1", 5555, keyPair)
+                    
+                    // Diagnostic: Who are we?
+                    val idRes = adb.shell("id")
+                    Log.d("VVS_TV_LOG", "ADB Identity: ${idRes.output}")
+
+                    Log.d("VVS_TV_LOG", "Attempting Netflix Clear...")
+                    
+                    var success = false
+                    var message = ""
+
+                    val response = adb.shell("cmd package clear com.netflix.ninja")
+                    Log.d("VVS_TV_LOG", "Clear Result: Code=${response.exitCode} Out='${response.output}'")
+                    
+                    if (response.exitCode == 0 || response.output.contains("Success", ignoreCase = true)) {
+                        success = true
+                        message = "Netflix reset successfully"
+                    } else {
+                        // Check for Permission Denial in output OR toString() (since output defaults to empty on some failures)
+                        val rawString = response.toString()
+                        val isSecurityException = response.output.contains("SecurityException") || 
+                                                response.output.contains("permission") ||
+                                                rawString.contains("SecurityException") ||
+                                                rawString.contains("permission")
+                        
+                        if (isSecurityException) {
+                            Log.d("VVS_TV_LOG", "Permission Denied for Clear. Falling back to Force Stop.")
+                            
+                            // Fallback: Force Stop
+                            adb.shell("am force-stop com.netflix.ninja")
+                            
+                            success = true 
+                            message = "Netflix Restricted: Performed Force Restart instead."
+                        } else {
+                            message = "Failed: ${response.output}"
+                        }
+                    }
+
+                    withContext(Dispatchers.Main) {
+                         Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Log.e("VVS_TV_LOG", "ADB Error", e)
+                Log.e("VVS_TV_LOG", "Netflix Reset Error", e)
                 withContext(Dispatchers.Main) {
                     val msg = e.message ?: "Unknown Error"
-                    Toast.makeText(this@MainActivity, "ADB Error: $msg", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Netflix Reset Error: $msg", Toast.LENGTH_SHORT).show()
                 }
             }
         }

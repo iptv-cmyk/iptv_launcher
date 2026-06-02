@@ -1,3 +1,11 @@
+10.0
+---
+* AdminReciever support.
+
+9.6
+---
+* Dash read optimizations 3.
+
 9.5
 ----
 * Intercepted apps remote button.

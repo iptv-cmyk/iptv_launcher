@@ -47,9 +47,8 @@ class HelloService : Service() {
         // private const val CHALLENGE = "bGF6eWZveCZicm93bmRvZw=="
         private const val AUTH_ID = "123"
         private const val SECRET = "8lBevKSaLmaTwmSujtxcUUwWmsnqwaBmT3d8p0Ga"
-        // 1 hour interval
-        private const val PING_INTERVAL_MS = 60 * 60 * 1000L
-        //private const val PING_INTERVAL_MS = 2 * 60 * 1000L
+        // 2 hour interval
+        private const val PING_INTERVAL_MS = 2 * 60 * 60 * 1000L
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -197,9 +196,9 @@ class HelloService : Service() {
             val db = FirebaseFirestore.getInstance()
 
             val docRef = if (!hotelName.isNullOrEmpty()) {
-                db.collection("hotels").document(hotelName).collection("players").document(deviceId)
+                db.collection("hotels").document(hotelName).collection("players").document(deviceId).collection("commands").document("latest")
             } else {
-                db.collection("unregistered_players").document(deviceId)
+                db.collection("unregistered_players").document(deviceId).collection("commands").document("latest")
             }
 
             if (currentCommandListenerPath == docRef.path) {
