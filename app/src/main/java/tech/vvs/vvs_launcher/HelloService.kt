@@ -186,6 +186,36 @@ class HelloService : Service() {
         }
     }
 
+    private fun updateIpMacInFirestore() {
+        try {
+            val db = FirebaseFirestore.getInstance()
+            val deviceId = DeviceManager.getOrCreateDeviceId(applicationContext)
+            val prefs = getSharedPreferences("vvs_prefs", Context.MODE_PRIVATE)
+            val hotelName = prefs.getString("hotel_name", null)
+            val ipAddress = DeviceManager.getLocalIpAddress()
+            val macAddress = DeviceManager.getMacAddress(applicationContext)
+
+            val updates = hashMapOf<String, Any>(
+                "ip_address" to ipAddress,
+                "mac_address" to macAddress,
+                "ip_mac_last_updated" to com.google.firebase.Timestamp.now()
+            )
+
+            val ref = if (!hotelName.isNullOrEmpty()) {
+                db.collection("hotels").document(hotelName)
+                    .collection("players").document(deviceId)
+            } else {
+                db.collection("unregistered_players").document(deviceId)
+            }
+
+            ref.update(updates)
+                .addOnSuccessListener { Log.d(TAG, "IP/MAC addresses updated in Firestore: IP=$ipAddress, MAC=$macAddress") }
+                .addOnFailureListener { e -> Log.e(TAG, "Failed to update IP/MAC in Firestore", e) }
+        } catch (e: Exception) {
+            Log.e(TAG, "updateIpMacInFirestore exception", e)
+        }
+    }
+
     private var currentCommandListenerPath: String? = null
 
     private fun startCommandListener() {
@@ -234,6 +264,11 @@ class HelloService : Service() {
                                 "get_channels" -> {
                                     serviceScope.launch {
                                         syncChannelsToFirestore()
+                                    }
+                                }
+                                "get_ip_mac" -> {
+                                    serviceScope.launch {
+                                        updateIpMacInFirestore()
                                     }
                                 }
                                 else -> {
