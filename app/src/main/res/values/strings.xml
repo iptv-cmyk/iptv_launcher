@@ -43,5 +43,6 @@
     <string name="exit_message">Are you sure you want to exit?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="action_show_accessibility">Show Accessibility</string>
     <string name="accessibility_service_description">Remaps the Home button to always open VVS Launcher</string>
 </resources>

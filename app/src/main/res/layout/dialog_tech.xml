@@ -102,14 +102,23 @@
 
         <Space
             android:layout_width="match_parent"
+            android:layout_height="12dp" />
+
+        <Button
+            android:id="@+id/showAccessibilityButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/action_show_accessibility" />
+
+        <Space
+            android:layout_width="match_parent"
             android:layout_height="24dp" />
 
         <Button
             android:id="@+id/exitAppButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/exit_title"
-             />
+            android:text="@string/exit_title" />
 
     </LinearLayout>
 

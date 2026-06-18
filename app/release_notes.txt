@@ -1,3 +1,9 @@
+10.4
+----
+* Default Room number is empty (sending -1 to ibs in this case).
+* Tech menu is visible at first install.
+* added show accessibility button to tech menu.
+
 10.1
 ----
 * IP and mac address support

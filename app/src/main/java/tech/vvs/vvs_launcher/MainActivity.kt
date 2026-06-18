@@ -1339,6 +1339,15 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
+    val showAccessibilityButton = dialogView.findViewById<android.widget.Button>(R.id.showAccessibilityButton)
+    showAccessibilityButton.setOnClickListener {
+        try {
+            startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        } catch (e: Exception) {
+            Toast.makeText(this@MainActivity, "Failed to open accessibility settings", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val exitAppButton = dialogView.findViewById<android.widget.Button>(R.id.exitAppButton)
     exitAppButton.setOnClickListener {
         showExitDialog()
@@ -1357,10 +1366,7 @@ class MainActivity : AppCompatActivity() {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val roomValue = roomEdit.text.toString().trim()
                 val roomNumber = roomValue
-                if (roomNumber == null || roomNumber == "") {
-                    Toast.makeText(this, R.string.invalid_room_number, Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
+
                 
                 // Validate Netflix Hour
                 val hourStr = netflixResetHourEdit.text.toString().trim()
@@ -1369,8 +1375,15 @@ class MainActivity : AppCompatActivity() {
                      Toast.makeText(this, "Invalid Reset Hour (0-23)", Toast.LENGTH_SHORT).show()
                      return@setOnClickListener
                 }
+                if (roomNumber == null || roomNumber == "") {
+                    //Toast.makeText(this, R.string.invalid_room_number, Toast.LENGTH_SHORT).show()
+                    //return@setOnClickListener
+                    Log.i("VVS_TV_LOG", "empty room num, setting -1");
+                    setRoomNumber("-1");
 
-                setRoomNumber(roomNumber)
+                }
+                else
+                    setRoomNumber(roomNumber)
 
                 // Register with IBS
                 RegistrationService.register(this@MainActivity, roomNumber)
@@ -1503,7 +1516,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun getRoomNumber(): String? {
-        val stored = prefs.getString(roomNumberPrefKey, "-1")
+        val stored = prefs.getString(roomNumberPrefKey, "")
         return stored
     }
 

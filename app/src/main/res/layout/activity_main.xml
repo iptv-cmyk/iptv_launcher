@@ -223,7 +223,7 @@
                     app:borderWidth="3dp"
                     app:fabCustomSize="64dp"
                     android:focusable="true"
-                    android:visibility="gone"
+                    android:visibility="visible"
                     android:focusableInTouchMode="true"
                     android:nextFocusLeft="@+id/netflixButton"
                     android:nextFocusRight="@+id/aboutButton"
