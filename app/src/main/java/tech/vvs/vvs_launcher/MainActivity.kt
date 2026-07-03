@@ -416,6 +416,7 @@ class MainActivity : AppCompatActivity() {
         playerView.useArtwork = false
         playerView.keepScreenOn = true
         player.setWakeMode(C.WAKE_MODE_NETWORK)
+        updateBufferingAnimationVisibility()
 
         gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
@@ -1010,6 +1011,17 @@ class MainActivity : AppCompatActivity() {
         playChannel(currentChannel, null) 
     }
 
+    private fun updateBufferingAnimationVisibility() {
+        val hideAnimation = prefs.getBoolean("hide_buffering_animation", false)
+        if (::playerView.isInitialized) {
+            if (hideAnimation) {
+                playerView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
+            } else {
+                playerView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+            }
+        }
+    }
+
     // --------------------------------------------------------------------------------
     // DIALOGS
     // --------------------------------------------------------------------------------
@@ -1286,6 +1298,7 @@ class MainActivity : AppCompatActivity() {
     val manualOverrideCheck = dialogView.findViewById<android.widget.CheckBox>(R.id.manualOverrideCheck)
 
     val allowRemoteKeysCheck = dialogView.findViewById<android.widget.CheckBox>(R.id.allowRemoteKeysCheck)
+    val hideBufferingAnimationCheck = dialogView.findViewById<android.widget.CheckBox>(R.id.hideBufferingAnimationCheck)
     
     val assetNames = try {
         assets.list(backgroundAssetsDir)?.sorted()
@@ -1330,6 +1343,7 @@ class MainActivity : AppCompatActivity() {
     manualOverrideCheck.isChecked = prefs.getBoolean("is_channel_url_manual_override", false)
 
     allowRemoteKeysCheck.isChecked = prefs.getBoolean("is_allow_remote_keys", false)
+    hideBufferingAnimationCheck.isChecked = prefs.getBoolean("hide_buffering_animation", false)
 
     val netflixResetNowButton = dialogView.findViewById<android.widget.Button>(R.id.netflixResetNowButton)
     netflixResetNowButton.setOnClickListener {
@@ -1396,7 +1410,10 @@ class MainActivity : AppCompatActivity() {
 
                 prefs.edit().apply() {
                     putBoolean("is_allow_remote_keys", allowRemoteKeysCheck.isChecked)
+                    putBoolean("hide_buffering_animation", hideBufferingAnimationCheck.isChecked)
                 }.apply()
+
+                updateBufferingAnimationVisibility()
 
 
                 

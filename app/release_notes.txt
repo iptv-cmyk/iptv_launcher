@@ -1,3 +1,7 @@
+10.5
+----
+* Hide buffering animation (optional in the tech menu).
+
 10.4
 ----
 * Default Room number is empty (sending -1 to ibs in this case).

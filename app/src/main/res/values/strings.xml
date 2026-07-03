@@ -45,4 +45,5 @@
     <string name="no">No</string>
     <string name="action_show_accessibility">Show Accessibility</string>
     <string name="accessibility_service_description">Remaps the Home button to always open VVS Launcher</string>
+    <string name="hide_buffering_animation">Hide buffering animation</string>
 </resources>

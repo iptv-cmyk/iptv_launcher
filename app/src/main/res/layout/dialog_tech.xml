@@ -57,6 +57,12 @@
             android:layout_height="wrap_content"
             android:text="Is allow remote keys" />
 
+        <CheckBox
+            android:id="@+id/hideBufferingAnimationCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/hide_buffering_animation" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
