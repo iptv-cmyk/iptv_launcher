@@ -1163,6 +1163,7 @@ class MainActivity : AppCompatActivity() {
             // Explicitly request focus for TV users so the D-pad is immediately ready to traverse
             channelsButton.post { channelsButton.requestFocus() }
             
+            prefs.edit().putString("player_status", "In Front (welcome screen)").apply()
         } else {
             waitingIconAnimator?.cancel()
             stopChannelsButtonAnimation()
@@ -1171,6 +1172,9 @@ class MainActivity : AppCompatActivity() {
             }
             welcomeStateContainer.visibility = View.GONE
             floatingButtonsContainer.visibility = View.GONE
+
+            val statusStr = if (channel != null) "Playing channel: ${channel.name}" else "Playing channel"
+            prefs.edit().putString("player_status", statusStr).apply()
         }
     }
 

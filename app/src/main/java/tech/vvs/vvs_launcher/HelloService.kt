@@ -216,6 +216,34 @@ class HelloService : Service() {
         }
     }
 
+    private fun updateStatusInFirestore() {
+        try {
+            val db = FirebaseFirestore.getInstance()
+            val deviceId = DeviceManager.getOrCreateDeviceId(applicationContext)
+            val prefs = getSharedPreferences("vvs_prefs", Context.MODE_PRIVATE)
+            val hotelName = prefs.getString("hotel_name", null)
+            val status = prefs.getString("player_status", "In Front (welcome screen)") ?: "In Front (welcome screen)"
+
+            val updates = hashMapOf<String, Any>(
+                "status" to status,
+                "status_last_updated" to com.google.firebase.Timestamp.now()
+            )
+
+            val ref = if (!hotelName.isNullOrEmpty()) {
+                db.collection("hotels").document(hotelName)
+                    .collection("players").document(deviceId)
+            } else {
+                db.collection("unregistered_players").document(deviceId)
+            }
+
+            ref.update(updates)
+                .addOnSuccessListener { Log.d(TAG, "Status updated in Firestore: $status") }
+                .addOnFailureListener { e -> Log.e(TAG, "Failed to update Status in Firestore", e) }
+        } catch (e: Exception) {
+            Log.e(TAG, "updateStatusInFirestore exception", e)
+        }
+    }
+
     private var currentCommandListenerPath: String? = null
 
     private fun startCommandListener() {
@@ -271,6 +299,11 @@ class HelloService : Service() {
                                         updateIpMacInFirestore()
                                     }
                                 }
+                                "get_status" -> {
+                                    serviceScope.launch {
+                                        updateStatusInFirestore()
+                                    }
+                                }
                                 else -> {
                                     Log.w(TAG, "Unknown command: $command")
                                 }
@@ -322,7 +355,9 @@ class HelloService : Service() {
                     "model"         to (prefs.getString("device_model", "") ?: ""),
                     "brand"         to (prefs.getString("device_brand", "") ?: ""),
                     "ibs_ip"        to (prefs.getString("ibs_ip", "") ?: ""),
-                    "ibs_port"      to prefs.getInt("ibs_port", 0)
+                    "ibs_port"      to prefs.getInt("ibs_port", 0),
+                    "status"        to (prefs.getString("player_status", "In Front (welcome screen)") ?: "In Front (welcome screen)"),
+                    "status_last_updated" to now
                 )
                 if (!ibsReachable) data["last_ibs_failure"] = now
 
@@ -344,7 +379,9 @@ class HelloService : Service() {
                 "is_alive"      to true,
                 "last_seen"     to now,
                 // IBS health is tracked separately.
-                "ibs_reachable" to ibsReachable
+                "ibs_reachable" to ibsReachable,
+                "status"        to (prefs.getString("player_status", "In Front (welcome screen)") ?: "In Front (welcome screen)"),
+                "status_last_updated" to now
             )
             if (!ibsReachable) {
                 updates["last_ibs_failure"] = now
