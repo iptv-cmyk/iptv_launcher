@@ -236,7 +236,7 @@ class HelloService : Service() {
                 db.collection("unregistered_players").document(deviceId)
             }
 
-            ref.update(updates)
+            ref.set(updates, com.google.firebase.firestore.SetOptions.merge())
                 .addOnSuccessListener { Log.d(TAG, "Status updated in Firestore: $status") }
                 .addOnFailureListener { e -> Log.e(TAG, "Failed to update Status in Firestore", e) }
         } catch (e: Exception) {

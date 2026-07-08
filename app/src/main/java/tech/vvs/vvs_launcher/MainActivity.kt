@@ -1577,6 +1577,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         returnToWelcomeScreen()
+        prefs.edit().putString("player_status", "Not in front").apply()
     }
 
     // check app upgrade
@@ -1659,6 +1660,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val channel = viewModel.selectedChannel.value
+        updateEmptyState(channel)
         channel?.let {
             val isUdp = it.uri.startsWith("udp", ignoreCase = true)
             if (isUdp && !multicastLock.isHeld) multicastLock.acquire()
